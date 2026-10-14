@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>RC Prop Calculator</title>
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      padding: 24px 14px;
+      background: #f3f5f7;
+      color: #202833;
+      font: 16px/1.5 Arial, sans-serif;
+    }
+
+    main {
+      max-width: 680px;
+      margin: auto;
+      padding: 24px;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 12px #00000010;
+    }
+
+    h1 { margin-top: 0; font-size: 27px; }
+    h2 { margin-top: 28px; font-size: 19px; }
+
+    .intro { color: #586575; }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 4px;
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    input, select, button {
+      width: 100%;
+      min-height: 42px;
+      padding: 9px;
+      border: 1px solid #c8d0d9;
+      border-radius: 6px;
+      font: inherit;
+    }
+
+    .field { min-width: 0; }
+    .full { grid-column: 1 / -1; }
+
+    button {
+      margin-top: 18px;
+      background: #185abd;
+      color: white;
+      border: 0;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    button:disabled { opacity: 0.6; cursor: wait; }
+
+    #status {
+      margin-top: 18px;
+      padding: 12px;
+      border-radius: 6px;
+      overflow-wrap: anywhere;
+      white-space: pre-wrap;
+    }
+
+    #status:empty { display: none; }
+    .success { background: #e6f5e9; color: #185b2a; }
+    .error { background: #fff0ef; color: #942b22; }
+    .info { background: #eaf2ff; color: #174785; }
+
+    small { color: #586575; }
+
+    @media (max-width: 480px) {
+      .grid { grid-template-columns: 1fr; }
+      .full { grid-column: auto; }
+      main { padding: 18px; }
+    }
+  </style>
+</head>
+
+<body>
+<main>
+  <h1>RC Prop Calculator</h1>
+  <p class="intro">
+    Potkurien testipenkissä mitattujen tulosten tallennus.
+    Tämä on sovelluksen ensimmäinen testiversio.
+  </p>
+
+  <h2>Testitiedot</h2>
+
+  <form id="testForm">
+    <div class="grid">
+
+      <div class="field">
+        <label for="alias">Nimimerkki</label>
+        <input id="alias" value="TestUser" maxlength="60">
+      </div>
+
+      <div class="field">
+        <label for="source">Tietolähde</label>
+        <select id="source">
+          <option value="OwnTest">Oma mittaus</option>
+          <option value="YouTube">YouTube</option>
+          <option value="Website">Verkkosivu</option>
+          <option value="Publication">Julkaisu</option>
+          <option value="Other">Muu</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="engineMake">Moottorin valmistaja</label>
+        <input id="engineMake" value="Saito" maxlength="80">
+      </div>
+
+      <div class="field">
+        <label for="engineModel">Moottorin malli</label>
+        <input id="engineModel" placeholder="Esim. FG-61TS" maxlength="80">
+      </div>
+
+      <div class="field">
+        <label for="diameter">Potkurin halkaisija (tuumaa)</label>
+        <input id="diameter" type="number" min="1" max="100"
+          step="any" value="25" required>
+      </div>
+
+      <div class="field">
+        <label for="pitch">Potkurin nousu (tuumaa)</label>
+        <input id="pitch" type="number" min="0" max="100"
+          step="any" value="8" required>
+      </div>
+
+      <div class="field">
+        <label for="blades">Lapojen määrä</label>
+        <input id="blades" type="number" min="1" max="12"
+          step="1" value="2" required>
+      </div>
+
+      <div class="field">
+        <label for="rpm">Mitattu kierrosluku (r/min)</label>
+        <input id="rpm" type="number" min="1" max="100000"
+          step="1" value="6000" required>
+      </div>
+
+      <div class="field">
+        <label for="thrust">Työntövoima</label>
+        <input id="thrust" type="number" min="0" step="any"
+          placeholder="Jätä tyhjäksi, jos ei mitattu">
+      </div>
+
+      <div class="field">
+        <label for="thrustUnit">Työntövoiman yksikkö</label>
+        <select id="thrustUnit">
+          <option value="kgf">kgf (kilogrammavoima)</option>
+          <option value="N">N (newton)</option>
+          <option value="lbf">lbf (paunavoima)</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="density">Ilman tiheys (kg/m³)</label>
+        <input id="density" type="number" min="0.1" max="2"
+          step="any" value="1.225" required>
+        <small>Oletusarvo; merkitään oletusarvoksi.</small>
+      </div>
+
+      <div class="field">
+        <label for="date">Mittauspäivä</label>
+        <input id="date" type="date" required>
+      </div>
+
+      <div class="field full">
+        <label for="sourceUrl">Lähteen URL (vaaditaan muiden kuin omien mittausten yhteydessä)</label>
+        <input id="sourceUrl" type="url" placeholder="https://...">
+      </div>
+
+      <div class="field full">
+        <label for="notes">Lisätiedot</label>
+        <input id="notes" maxlength="500" placeholder="Esim. testipenkki ja olosuhteet">
+      </div>
+    </div>
+
+    <button id="saveButton" type="submit">Tallenna testimittaus</button>
+  </form>
+
+  <div id="status" role="status" aria-live="polite"></div>
+</main>
+
+<script>
+  // RC Prop Calculatorin Apps Script -web-sovellus.
+  const API_URL =
+    "https://script.google.com/macros/s/AKfycbxPAZeAnuyrROW_4z0gQFINK1bttA8VC19Unx9AKKaAX1aUUGDZrauwaAYkUsQjZA0/exec";
+
+  const form = document.getElementById("testForm");
+  const button = document.getElementById("saveButton");
+  const statusBox = document.getElementById("status");
+
+  // Asetetaan päivämääräksi selaimen paikallinen päivä.
+  const today = new Date();
+  const localDate = [
+    today.getFullYear(),
+    String(today.getMonth() + 1).padStart(2, "0"),
+    String(today.getDate()).padStart(2, "0")
+  ].join("-");
+  document.getElementById("date").value = localDate;
+
+  function showStatus(message, type) {
+    statusBox.className = type;
+    statusBox.textContent = message;
+  }
+
+  form.addEventListener("submit", async function(event) {
+    event.preventDefault();
+
+    const sourceType = document.getElementById("source").value;
+    const sourceUrl = document.getElementById("sourceUrl").value.trim();
+    const thrustText = document.getElementById("thrust").value.trim();
+    const densityText = document.getElementById("density").value.trim();
+
+    if (sourceType !== "OwnTest" && !sourceUrl) {
+      showStatus("Anna lähteen URL, kun kyseessä ei ole oma mittaus.", "error");
+      return;
+    }
+
+    if (thrustText !== "" && Number(thrustText) < 0) {
+      showStatus("Työntövoima ei voi olla negatiivinen.", "error");
+      return;
+    }
+
+    if (!densityText || Number(densityText) <= 0) {
+      showStatus("Tarkista ilman tiheys.", "error");
+      return;
+    }
+
+    const test = {
+      TestDate: document.getElementById("date").value,
+      ContributorAlias: document.getElementById("alias").value.trim(),
+      SourceType: sourceType,
+      SourceURL: sourceUrl,
+      EngineMake: document.getElementById("engineMake").value.trim(),
+      EngineModel: document.getElementById("engineModel").value.trim(),
+      PropDiameter_in: Number(document.getElementById("diameter").value),
+      PropPitch_in: Number(document.getElementById("pitch").value),
+      BladeCount: Number(document.getElementById("blades").value),
+      RPM_measured: Number(document.getElementById("rpm").value),
+      ThrustInput_Value: thrustText === "" ? "" : Number(thrustText),
+      ThrustInput_Unit: document.getElementById("thrustUnit").value,
+      AirDensity_kg_m3: Number(densityText),
+      AirDensitySource: "STANDARD_ASSUMED",
+      Notes: document.getElementById("notes").value.trim()
+    };
+
+    if (!test.TestDate || !test.PropDiameter_in ||
+        !test.PropPitch_in || !test.BladeCount || !test.RPM_measured) {
+      showStatus("Tarkista pakolliset mittaustiedot.", "error");
+      return;
+    }
+
+    button.disabled = true;
+    button.textContent = "Tallennetaan...";
+    showStatus("Lähetetään tietoja rajapintaan...", "info");
+
+    try {
+      const response = await fetch(API_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "text/plain;charset=utf-8"
+        },
+        body: JSON.stringify({
+          action: "saveTest",
+          test: test
+        })
+      });
+
+      const responseText = await response.text();
+      let result;
+
+      try {
+        result = JSON.parse(responseText);
+      } catch {
+        throw new Error(
+          "Palvelin ei palauttanut JSON-vastausta. Tarkista API-julkaisu."
+        );
+      }
+
+      if (!response.ok || result.status === "error" || result.error) {
+        throw new Error(result.error || "Tallennus epäonnistui.");
+      }
+
+      if (result.status !== "ok") {
+        throw new Error("Palvelimen vastaus oli odottamaton: " + responseText);
+      }
+
+      const saved = result.test || {};
+
+      showStatus(
+        "Tallennus onnistui!\n" +
+        "Testitunnus: " + (saved.TestID || "ei palautettu") + "\n" +
+        "Tila: " + (saved.DataStatus || "ei ilmoitettu") + "\n" +
+        "Työntövoima (N): " +
+          (saved.Thrust_measured_N ?? "ei mitattu") + "\n" +
+        "CT0: " + (saved.CT0_calculated ?? "ei laskettu"),
+        "success"
+      );
+
+    } catch (error) {
+      showStatus(
+        "Yhteys tai tallennus epäonnistui.\n" +
+        error.message + "\n\n" +
+        "Jos virhe mainitsee CORS- tai fetch-ongelman, tarkistamme " +
+        "seuraavaksi selaimen ja Apps Scriptin välisen yhteyden.",
+        "error"
+      );
+    } finally {
+      button.disabled = false;
+      button.textContent = "Tallenna testimittaus";
+    }
+  });
+</script>
+</body>
+</html>
