@@ -252,8 +252,11 @@
       PropPitch_in: Number(document.getElementById("pitch").value),
       BladeCount: Number(document.getElementById("blades").value),
       RPM_measured: Number(document.getElementById("rpm").value),
-      ThrustInput_Value: thrustText === "" ? "" : Number(thrustText),
-      ThrustInput_Unit: thrustText === ""
+      ThrustInput_Value: thrustText.trim() === ""
+        ? ""
+        : Number(thrustText),
+      
+      ThrustInput_Unit: thrustText.trim() === ""
         ? ""
         : document.getElementById("thrustUnit").value,
       AirDensity_kg_m3: Number(densityText),
