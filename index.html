@@ -273,7 +273,36 @@
     button.disabled = true;
     button.textContent = "Tallennetaan...";
     showStatus("Lähetetään tietoja rajapintaan...", "info");
-
+    
+    // Tarkistetaan pakolliset mittaustiedot
+    const errors = [];
+    
+    const diameter = Number(test.PropDiameter_in);
+    const pitch = Number(test.PropPitch_in);
+    const blades = Number(test.BladeCount);
+    const rpm = Number(test.RPM_measured);
+    
+    if (!Number.isFinite(diameter) || diameter <= 0) {
+      errors.push("Potkurin halkaisijan pitää olla positiivinen luku.");
+    }
+    
+    if (!Number.isFinite(pitch) || pitch <= 0) {
+      errors.push("Potkurin nousun pitää olla positiivinen luku.");
+    }
+    
+    if (!Number.isInteger(blades) || blades < 1 || blades > 8) {
+      errors.push("Lapojen määrän pitää olla kokonaisluku väliltä 1–8.");
+    }
+    
+    if (!Number.isFinite(rpm) || rpm <= 0) {
+      errors.push("Kierrosluvun pitää olla positiivinen luku.");
+    }
+    
+    if (errors.length > 0) {
+      showMessage(errors.join("\n"), true);
+      return;
+    }
+    
     try {
       const response = await fetch(API_URL, {
         method: "POST",
