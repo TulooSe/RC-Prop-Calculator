@@ -253,7 +253,9 @@
       BladeCount: Number(document.getElementById("blades").value),
       RPM_measured: Number(document.getElementById("rpm").value),
       ThrustInput_Value: thrustText === "" ? "" : Number(thrustText),
-      ThrustInput_Unit: document.getElementById("thrustUnit").value,
+      ThrustInput_Unit: thrustText === ""
+        ? ""
+        : document.getElementById("thrustUnit").value,
       AirDensity_kg_m3: Number(densityText),
       AirDensitySource: "STANDARD_ASSUMED",
       Notes: document.getElementById("notes").value.trim()
