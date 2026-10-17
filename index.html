@@ -299,7 +299,9 @@
     }
     
     if (errors.length > 0) {
-      showMessage(errors.join("\n"), true);
+      showStatus(errors.join("\n"), "error");
+      button.disabled = false;
+      button.textContent = "Tallenna testimittaus";
       return;
     }
     
