@@ -31,6 +31,10 @@
     th { background: #f3f5f7; position: sticky; top: 0; }
     tbody tr:last-child td { border-bottom: 0; }
     .table-note { color: #586575; font-size: 13px; }
+    .quality-good { color: #176533; font-weight: 700; }
+    .quality-check { color: #8a4b00; font-weight: 700; }
+    .weather-panel { margin-top: 18px; padding: 14px; border: 1px solid #d9dfe6; border-radius: 8px; background: #fafbfd; }
+    .weather-panel h3 { margin: 0 0 8px; font-size: 16px; }
     .secondary-button { margin-top: 0; background: #e9eef5; color: #24364a; border: 1px solid #c8d0d9; }
     @media (max-width: 480px) { .grid { grid-template-columns: 1fr; } .full { grid-column: auto; } main { padding: 18px; } }
   </style>
@@ -58,10 +62,23 @@
       <div class="field"><label for="rpm">Mitattu kierrosluku (r/min)</label><input id="rpm" type="number" min="1" max="100000" step="1" value="6000" required></div>
       <div class="field"><label for="thrust">Työntövoima</label><input id="thrust" type="number" min="0" step="any" placeholder="Jätä tyhjäksi, jos ei mitattu"></div>
       <div class="field"><label for="thrustUnit">Työntövoiman yksikkö</label><select id="thrustUnit"><option value="kgf">kgf (kilogrammavoima)</option><option value="N">N (newton)</option><option value="lbf">lbf (paunavoima)</option></select></div>
-      <div class="field"><label for="density">Ilman tiheys (kg/m³)</label><input id="density" type="number" min="0.1" max="2" step="any" value="1.225" required><small>Oletusarvo; merkitään oletusarvoksi.</small></div>
+      <div class="field"><label for="density">Ilman tiheys (kg/m³)</label><input id="density" type="number" min="0.1" max="2" step="any" value="1.225" required><small id="densityHelp">Oletusarvo; merkitään oletusarvoksi.</small></div>
       <div class="field"><label for="date">Mittauspäivä</label><input id="date" type="date" required></div>
+      <div class="field"><label for="ambientTemp">Lämpötila mittauspaikalla (°C)</label><input id="ambientTemp" type="number" min="-80" max="60" step="any" placeholder="Jos tiedossa"></div>
+      <div class="field"><label for="pressure">Ilmanpaine (hPa)</label><input id="pressure" type="number" min="300" max="1100" step="any" placeholder="Jos tiedossa"></div>
       <div class="field full"><label for="sourceUrl">Lähteen URL (vaaditaan muiden kuin omien mittausten yhteydessä)</label><input id="sourceUrl" type="url" placeholder="https://..."></div>
       <div class="field full"><label for="notes">Lisätiedot</label><input id="notes" maxlength="500" placeholder="Esim. testipenkki ja olosuhteet"></div>
+    </div>
+    <div class="weather-panel full">
+      <h3>Historiallisten sääolosuhteiden haku</h3>
+      <p class="table-note">Hae päivämäärän ja paikan perusteella mallinnetut tuntisäätiedot. Halutessasi anna muistamasi lämpötila, jotta löydät sitä lähinnä olevat tunnit. Historiallisessa sääarkistossa on viivettä, joten aivan uusimmat päivät eivät välttämättä ole saatavilla.</p>
+      <div class="grid">
+        <div class="field"><label for="weatherLocation">Paikka (esim. Alajärvi, Suomi)</label><input id="weatherLocation" placeholder="Paikkakunta tai paikan nimi"></div>
+        <div class="field"><label for="rememberedTemp">Muistettu lämpötila (°C, valinnainen)</label><input id="rememberedTemp" type="number" step="any" placeholder="Esim. 18"></div>
+        <div class="field full"><button id="fetchWeather" class="secondary-button" type="button">Hae historialliset sääolosuhteet</button></div>
+        <div class="field full"><label for="weatherHour">Valitse sopivin tunti</label><select id="weatherHour" disabled><option value="">Hae ensin säätiedot</option></select><small>Valinta täyttää lämpötilan, ilmanpaineen ja lasketun ilman tiheyden. Tiedot ovat säämallin arvioita, eivät välttämättä mittauspisteen havaintoja.</small></div>
+      </div>
+      <p id="weatherStatus" class="table-note" role="status" aria-live="polite"></p>
     </div>
     <button id="saveButton" type="submit">Tallenna testimittaus</button>
   </form>
@@ -78,15 +95,15 @@
     <p id="testsStatus" class="table-note" role="status" aria-live="polite">Testejä ei ole vielä ladattu.</p>
     <div class="table-wrap">
       <table aria-label="Tallennetut testimittaukset">
-        <thead><tr><th>Päivä</th><th>Moottori</th><th>Potkuri</th><th>Kierrosluku (r/min)</th><th>Työntövoima (N)</th><th>CT₀</th><th>Datan tila</th><th>Testitunnus</th></tr></thead>
-        <tbody id="testsBody"><tr><td colspan="8">Testejä ei ole vielä ladattu.</td></tr></tbody>
+        <thead><tr><th>Päivä</th><th>Moottori</th><th>Potkuri</th><th>Kierrosluku (r/min)</th><th>Työntövoima (N)</th><th>CT₀</th><th>Datan tila</th><th>Laatutarkistus</th><th>Testitunnus</th></tr></thead>
+        <tbody id="testsBody"><tr><td colspan="9">Testejä ei ole vielä ladattu.</td></tr></tbody>
       </table>
     </div>
     <p class="table-note">Taulukkoa voi vierittää vaakasuunnassa, jos kaikki sarakkeet eivät mahdu näytölle.</p>
   </section>
 </main>
 <script>
-  const API_URL = "https://script.google.com/macros/s/AKfycbwkn65CSUgyq9p-L09Bur5IXDKItqYf2GSm-OfFmNUVSk1ORtmZgXJfgWYvWBvP6o0/exec";
+  const API_URL = "https://script.google.com/macros/s/AKfycbx-RV7zMqGDUDkSgu05i4NVzcWNqqj3hNaEkIc_qwFkM3inhPcCCFFJSObIYI_pZtw/exec";
   const form = document.getElementById("testForm");
   const button = document.getElementById("saveButton");
   const statusBox = document.getElementById("status");
@@ -171,6 +188,21 @@
     row.appendChild(cell);
   }
 
+  function qualityFlagLabel(flag) {
+    const labels = {
+      MISSING_THRUST: "Työntövoimaa ei ole ilmoitettu",
+      MISSING_AIR_DENSITY: "Ilman tiheys puuttuu",
+      ASSUMED_DENSITY: "Ilman tiheys on oletusarvo",
+      MISSING_PITCH: "Potkurin nousu puuttuu",
+      MISSING_TEMPERATURE: "Lämpötila puuttuu",
+      MISSING_PRESSURE: "Ilmanpaine puuttuu",
+      MISSING_INSTRUMENT_INFO: "Mittalaitetiedot puuttuvat",
+      MISSING_ENGINE_DETAILS: "Moottorin tiedot ovat puutteelliset",
+      MISSING_SOURCE: "Lähdetieto puuttuu"
+    };
+    return labels[flag] || flag;
+  }
+
   function renderTests() {
     const query = testSearch.value.trim().toLocaleLowerCase("fi");
     const wantedStatus = statusFilter.value;
@@ -183,7 +215,7 @@
     if (!filtered.length) {
       const row = document.createElement("tr");
       const cell = document.createElement("td");
-      cell.colSpan = 8;
+      cell.colSpan = 9;
       cell.textContent = savedTests.length ? "Suodattimilla ei löytynyt testejä." : "Tallennettuja testejä ei löytynyt.";
       row.appendChild(cell);
       testsBody.appendChild(row);
@@ -200,6 +232,12 @@
         addCell(row, test.Thrust_measured_N);
         addCell(row, test.CT0_calculated);
         addCell(row, test.DataStatus);
+        const qualityCell = document.createElement("td");
+        const flagCount = Number(test.QualityFlagCount || 0);
+        qualityCell.textContent = flagCount ? `${flagCount} huomioita` : "Perustiedot kunnossa";
+        qualityCell.className = flagCount ? "quality-check" : "quality-good";
+        if (Array.isArray(test.QualityFlags) && test.QualityFlags.length) qualityCell.title = test.QualityFlags.map(qualityFlagLabel).join("; ");
+        row.appendChild(qualityCell);
         addCell(row, test.TestID);
         testsBody.appendChild(row);
       });
@@ -212,7 +250,7 @@
     testsBody.replaceChildren();
     const loadingRow = document.createElement("tr");
     const loadingCell = document.createElement("td");
-    loadingCell.colSpan = 8;
+    loadingCell.colSpan = 9;
     loadingCell.textContent = "Ladataan…";
     loadingRow.appendChild(loadingCell);
     testsBody.appendChild(loadingRow);
@@ -226,7 +264,7 @@
       testsBody.replaceChildren();
       const row = document.createElement("tr");
       const cell = document.createElement("td");
-      cell.colSpan = 8;
+      cell.colSpan = 9;
       cell.textContent = "Testilistan lataus epäonnistui.";
       row.appendChild(cell);
       testsBody.appendChild(row);
@@ -237,6 +275,114 @@
   statusFilter.addEventListener("change", renderTests);
   document.getElementById("refreshTests").addEventListener("click", loadTests);
   loadTests();
+
+  let densitySource = "STANDARD_ASSUMED";
+  let weatherProvenance = "";
+  const weatherHour = document.getElementById("weatherHour");
+  const weatherStatus = document.getElementById("weatherStatus");
+  const ambientTempInput = document.getElementById("ambientTemp");
+  const pressureInput = document.getElementById("pressure");
+  const densityInput = document.getElementById("density");
+  const densityHelp = document.getElementById("densityHelp");
+
+  function setDensityFromWeather(tempC, pressureHpa) {
+    const density = (Number(pressureHpa) * 100) / (287.05 * (Number(tempC) + 273.15));
+    ambientTempInput.value = Number(tempC).toFixed(1);
+    pressureInput.value = Number(pressureHpa).toFixed(1);
+    densityInput.value = density.toFixed(4);
+    densitySource = "CALCULATED_DRY_AIR";
+    densityHelp.textContent = "Laskettu haetusta lämpötilasta ja pintapaineesta.";
+  }
+
+  document.getElementById("fetchWeather").addEventListener("click", async () => {
+    const place = document.getElementById("weatherLocation").value.trim();
+    const date = document.getElementById("date").value;
+    const rememberedText = document.getElementById("rememberedTemp").value.trim();
+    if (!place) { weatherStatus.textContent = "Anna paikkakunta tai paikka."; return; }
+    if (!date) { weatherStatus.textContent = "Valitse ensin mittauspäivä."; return; }
+    weatherStatus.textContent = "Etsitään paikkaa ja haetaan historiallisia säätietoja…";
+    weatherHour.disabled = true;
+    weatherHour.replaceChildren(new Option("Haetaan…", ""));
+    try {
+      const geoUrl = "https://geocoding-api.open-meteo.com/v1/search?" + new URLSearchParams({name: place, count: "5", language: "fi", format: "json"});
+      const geoResponse = await fetch(geoUrl);
+      if (!geoResponse.ok) throw new Error("Paikkahaku epäonnistui (HTTP " + geoResponse.status + ").");
+      const geo = await geoResponse.json();
+      if (!geo.results || !geo.results.length) throw new Error("Paikkaa ei löytynyt. Kokeile paikkakuntaa ja maan nimeä.");
+      const location = geo.results[0];
+      const params = new URLSearchParams({
+        latitude: String(location.latitude), longitude: String(location.longitude),
+        start_date: date, end_date: date,
+        hourly: "temperature_2m,surface_pressure,relative_humidity_2m",
+        timezone: "auto", temperature_unit: "celsius", models: "era5"
+      });
+      const weatherResponse = await fetch("https://archive-api.open-meteo.com/v1/archive?" + params);
+      if (!weatherResponse.ok) throw new Error("Säätietojen haku epäonnistui (HTTP " + weatherResponse.status + ").");
+      const weather = await weatherResponse.json();
+      if (!weather.hourly || !weather.hourly.time) throw new Error("Palvelu ei palauttanut tuntisäätietoja tälle päivälle.");
+      const remembered = rememberedText === "" ? null : Number(rememberedText);
+      const options = weather.hourly.time.map((time, i) => ({
+        time,
+        temp: weather.hourly.temperature_2m[i],
+        pressure: weather.hourly.surface_pressure[i],
+        humidity: weather.hourly.relative_humidity_2m[i],
+        diff: remembered === null ? 0 : Math.abs(Number(weather.hourly.temperature_2m[i]) - remembered)
+      })).filter(x => x.temp != null && x.pressure != null);
+      if (!options.length) throw new Error("Tälle päivälle ei löytynyt käyttökelpoisia tuntiarvoja.");
+      if (remembered !== null) options.sort((a,b) => a.diff - b.diff);
+      weatherHour.replaceChildren();
+      options.forEach((item, i) => {
+        const label = `${item.time.replace("T", " ")} · ${Number(item.temp).toFixed(1)} °C · ${Number(item.pressure).toFixed(1)} hPa${item.humidity == null ? "" : " · RH " + Math.round(item.humidity) + "%"}${remembered !== null ? " · ero " + item.diff.toFixed(1) + " °C" : ""}`;
+        const option = new Option(label, String(i));
+        option.dataset.temp = item.temp;
+        option.dataset.pressure = item.pressure;
+        option.dataset.time = item.time;
+        option.dataset.humidity = item.humidity == null ? "" : item.humidity;
+        weatherHour.appendChild(option);
+      });
+      weatherHour.disabled = false;
+      weatherHour.selectedIndex = 0;
+      const first = weatherHour.options[0];
+      setDensityFromWeather(first.dataset.temp, first.dataset.pressure);
+      weatherProvenance = `Historiallinen sääarvio: Open-Meteo ERA5; paikka ${location.name}${location.country ? ", " + location.country : ""}; koordinaatit ${location.latitude}, ${location.longitude}; valittu tunti ${first.dataset.time}; pintapaine ja lämpötila mallinnettuja arvoja.`;
+      weatherStatus.textContent = `Löytyi ${options.length} tuntiarvoa paikalle ${location.name}${location.country ? ", " + location.country : ""}. Valitse mittaushetkeä lähinnä oleva tunti. Kyse on uudelleenanalyysin arviosta, ei paikallisen sääaseman varmistetusta havainnosta.`;
+    } catch (error) {
+      weatherStatus.textContent = "Säätietoja ei saatu haettua: " + error.message;
+      weatherHour.disabled = true;
+      weatherHour.replaceChildren(new Option("Säätietoja ei saatavilla", ""));
+    }
+  });
+
+  weatherHour.addEventListener("change", () => {
+    const option = weatherHour.options[weatherHour.selectedIndex];
+    if (!option || !option.dataset.temp) return;
+    setDensityFromWeather(option.dataset.temp, option.dataset.pressure);
+    weatherProvenance = weatherProvenance.replace(/valittu tunti [^;]+;/, "valittu tunti " + option.dataset.time + ";");
+  });
+
+  densityInput.addEventListener("input", () => {
+    if (densitySource === "CALCULATED_DRY_AIR") {
+      densitySource = "USER_ENTERED";
+      weatherProvenance += " Käyttäjä muokkasi ilman tiheyden arvoa säähaun jälkeen.";
+      densityHelp.textContent = "Käyttäjän muokkaama arvo; tarkista sen alkuperä.";
+    }
+  });
+
+  function calculateDensityFromManualConditions() {
+    const temp = ambientTempInput.value.trim();
+    const pressure = pressureInput.value.trim();
+    if (temp === "" || pressure === "") return;
+    const t = Number(temp), p = Number(pressure);
+    if (!Number.isFinite(t) || !Number.isFinite(p) || t <= -273.15 || p <= 0) return;
+    densityInput.value = ((p * 100) / (287.05 * (t + 273.15))).toFixed(4);
+    densitySource = "CALCULATED_DRY_AIR";
+    densityHelp.textContent = "Laskettu käyttäjän antamasta lämpötilasta ja ilmanpaineesta.";
+    weatherProvenance = "";
+  }
+  ambientTempInput.addEventListener("change", calculateDensityFromManualConditions);
+  pressureInput.addEventListener("change", calculateDensityFromManualConditions);
+  document.getElementById("date").addEventListener("change", () => { weatherProvenance = ""; weatherHour.disabled = true; });
+  document.getElementById("weatherLocation").addEventListener("input", () => { weatherProvenance = ""; });
 
   form.addEventListener("submit", async event => {
     event.preventDefault();
@@ -270,8 +416,10 @@
       ThrustInput_Value: thrustText === "" ? "" : Number(thrustText),
       ThrustInput_Unit: thrustText === "" ? "" : document.getElementById("thrustUnit").value,
       AirDensity_kg_m3: Number(densityText),
-      AirDensitySource: "STANDARD_ASSUMED",
-      Notes: document.getElementById("notes").value.trim()
+      AirDensitySource: densitySource,
+      AmbientTemp_C: ambientTempInput.value.trim() === "" ? "" : Number(ambientTempInput.value),
+      Pressure_hPa: pressureInput.value.trim() === "" ? "" : Number(pressureInput.value),
+      Notes: [document.getElementById("notes").value.trim(), weatherProvenance].filter(Boolean).join(" | ")
     };
 
     const errors = [];
