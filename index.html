@@ -24,6 +24,14 @@
     .success { background: #e6f5e9; color: #185b2a; }
     .error { background: #fff0ef; color: #942b22; }
     .info { background: #eaf2ff; color: #174785; }
+    .filters { display: grid; grid-template-columns: 2fr 1fr; gap: 10px; margin: 12px 0; }
+    .table-wrap { overflow-x: auto; border: 1px solid #d9dfe6; border-radius: 8px; }
+    table { border-collapse: collapse; width: 100%; min-width: 780px; font-size: 13px; }
+    th, td { padding: 9px 10px; border-bottom: 1px solid #e4e8ed; text-align: left; white-space: nowrap; }
+    th { background: #f3f5f7; position: sticky; top: 0; }
+    tbody tr:last-child td { border-bottom: 0; }
+    .table-note { color: #586575; font-size: 13px; }
+    .secondary-button { margin-top: 0; background: #e9eef5; color: #24364a; border: 1px solid #c8d0d9; }
     @media (max-width: 480px) { .grid { grid-template-columns: 1fr; } .full { grid-column: auto; } main { padding: 18px; } }
   </style>
 </head>
@@ -60,7 +68,7 @@
   <div id="status" role="status" aria-live="polite"></div>
 </main>
 <script>
-  const API_URL = "https://script.google.com/macros/s/AKfycby2AcZXZfxTq3MIHU58m3BrEw4VoEB_yvq2DuzSyC8aYTtIhBiY8sGZynpZLsbazKs/exec";
+  const API_URL = "https://script.google.com/macros/s/AKfycbx-RV7zMqGDUDkSgu05i4NVzcWNqqj3hNaEkIc_qwFkM3inhPcCCFFJSObIYI_pZtw/exec";
   const form = document.getElementById("testForm");
   const button = document.getElementById("saveButton");
   const statusBox = document.getElementById("status");
@@ -73,6 +81,7 @@
     FuelType: document.getElementById("fuelType")
   };
   let engines = [];
+  let savedTests = [];
 
   const today = new Date();
   document.getElementById("date").value = [today.getFullYear(), String(today.getMonth()+1).padStart(2,"0"), String(today.getDate()).padStart(2,"0")].join("-");
@@ -133,6 +142,84 @@
   setEngineFields(null, false);
   loadEngines();
 
+  const testsBody = document.getElementById("testsBody");
+  const testsStatus = document.getElementById("testsStatus");
+  const testSearch = document.getElementById("testSearch");
+  const statusFilter = document.getElementById("statusFilter");
+
+  function addCell(row, value) {
+    const cell = document.createElement("td");
+    cell.textContent = value == null || value === "" ? "—" : String(value);
+    row.appendChild(cell);
+  }
+
+  function renderTests() {
+    const query = testSearch.value.trim().toLocaleLowerCase("fi");
+    const wantedStatus = statusFilter.value;
+    const filtered = savedTests.filter(test => {
+      const haystack = [test.TestID, test.EngineID, test.EngineMake, test.EngineModel, test.PropMake, test.PropModel, test.PropDiameter_in, test.PropPitch_in, test.BladeCount, test.RPM_measured, test.Notes]
+        .filter(value => value != null).join(" ").toLocaleLowerCase("fi");
+      return (!query || haystack.includes(query)) && (!wantedStatus || test.DataStatus === wantedStatus);
+    });
+    testsBody.replaceChildren();
+    if (!filtered.length) {
+      const row = document.createElement("tr");
+      const cell = document.createElement("td");
+      cell.colSpan = 8;
+      cell.textContent = savedTests.length ? "Suodattimilla ei löytynyt testejä." : "Tallennettuja testejä ei löytynyt.";
+      row.appendChild(cell);
+      testsBody.appendChild(row);
+    } else {
+      filtered.forEach(test => {
+        const row = document.createElement("tr");
+        const engine = [test.EngineMake, test.EngineModel].filter(Boolean).join(" ");
+        const propSize = [test.PropDiameter_in, test.PropPitch_in].filter(v => v !== "" && v != null).join(" × ");
+        const prop = (test.PropMake || test.PropModel) ? [test.PropMake, test.PropModel, propSize].filter(Boolean).join(" ") : (propSize ? propSize + " in" : "—");
+        addCell(row, test.TestDate);
+        addCell(row, engine || test.EngineID);
+        addCell(row, prop + (test.BladeCount ? " · " + test.BladeCount + " lapaa" : ""));
+        addCell(row, test.RPM_measured);
+        addCell(row, test.Thrust_measured_N);
+        addCell(row, test.CT0_calculated);
+        addCell(row, test.DataStatus);
+        addCell(row, test.TestID);
+        testsBody.appendChild(row);
+      });
+    }
+    testsStatus.textContent = `Näytetään ${filtered.length} / ${savedTests.length} testiä. Palvelimelta ladataan enintään 200 viimeisintä.`;
+  }
+
+  async function loadTests() {
+    testsStatus.textContent = "Ladataan testejä…";
+    testsBody.replaceChildren();
+    const loadingRow = document.createElement("tr");
+    const loadingCell = document.createElement("td");
+    loadingCell.colSpan = 8;
+    loadingCell.textContent = "Ladataan…";
+    loadingRow.appendChild(loadingCell);
+    testsBody.appendChild(loadingRow);
+    try {
+      const result = await apiPost({ action: "listTests" });
+      savedTests = Array.isArray(result.tests) ? result.tests : [];
+      renderTests();
+    } catch (error) {
+      savedTests = [];
+      testsStatus.textContent = "Testilistaa ei saatu ladattua: " + error.message + " Tarkista, että Apps Scriptin uusi versio on julkaistu.";
+      testsBody.replaceChildren();
+      const row = document.createElement("tr");
+      const cell = document.createElement("td");
+      cell.colSpan = 8;
+      cell.textContent = "Testilistan lataus epäonnistui.";
+      row.appendChild(cell);
+      testsBody.appendChild(row);
+    }
+  }
+
+  testSearch.addEventListener("input", renderTests);
+  statusFilter.addEventListener("change", renderTests);
+  document.getElementById("refreshTests").addEventListener("click", loadTests);
+  loadTests();
+
   form.addEventListener("submit", async event => {
     event.preventDefault();
     const sourceType = document.getElementById("source").value;
@@ -192,6 +279,7 @@
         "Työntövoima (N): " + (saved.Thrust_measured_N ?? "ei mitattu") + "\n" +
         "CT0: " + (saved.CT0_calculated ?? "ei laskettu"), "success");
       if (!selectedEngineId && test.EngineMake && test.EngineModel) await loadEngines();
+      await loadTests();
     } catch (error) {
       showStatus("Yhteys tai tallennus epäonnistui.\n" + error.message, "error");
     } finally {
