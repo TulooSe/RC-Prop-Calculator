@@ -1,366 +1,660 @@
-<!DOCTYPE html>
-<html lang="fi">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>RC Prop Calculator</title>
-  <style>
-    * { box-sizing: border-box; }
+//Code.gs
+/**
+ * RC Prop Calculator API — PROP_TESTS v1.0
+ *
+ * POST JSON:
+ * {
+ *   "action": "saveTest",
+ *   "test": {
+ *     "SourceType": "OwnTest",
+ *     "PropDiameter_in": 20,
+ *     "PropPitch_in": 6,
+ *     "BladeCount": 2,
+ *     "RPM_measured": 8050,
+ *     "ThrustInput_Value": 10.7,
+ *     "ThrustInput_Unit": "kgf",
+ *     "AirDensity_kg_m3": 1.225
+ *   }
+ * }
+ */
 
-    body {
-      margin: 0;
-      padding: 24px 14px;
-      background: #f3f5f7;
-      color: #202833;
-      font: 16px/1.5 Arial, sans-serif;
-    }
+const PROP_TESTS_SHEET = "PROP_TESTS";
+const ENGINES_SHEET = "ENGINES";
+const ENGINES_HEADERS = [
+  "EngineID", "EngineMake", "EngineModel", "EngineDisplacement_cc",
+  "EngineType", "FuelType"
+];
+const PROP_TESTS_SCHEMA_VERSION = "1.1";
 
-    main {
-      max-width: 680px;
-      margin: auto;
-      padding: 24px;
-      background: white;
-      border-radius: 12px;
-      box-shadow: 0 2px 12px #00000010;
-    }
+const PROP_TESTS_HEADERS = [
+  "TestID",
+  "TestDate",
+  "RecordCreatedAt",
+  "ContributorAlias",
+  "SourceType",
+  "SourceURL",
+  "EngineID",
+  "EngineMake",
+  "EngineModel",
+  "EngineDisplacement_cc",
+  "EngineType",
+  "FuelType",
+  "PropMake",
+  "PropModel",
+  "PropDiameter_in",
+  "PropPitch_in",
+  "BladeCount",
+  "RPM_measured",
+  "ThrustInput_Value",
+  "ThrustInput_Unit",
+  "Thrust_measured_N",
+  "AmbientTemp_C",
+  "Pressure_hPa",
+  "AirDensity_kg_m3",
+  "AirDensitySource",
+  "InstrumentType",
+  "InstrumentAccuracy",
+  "TestSetup",
+  "Notes",
+  "DataStatus",
+  "CT0_calculated",
+  "DataQualityFlags",
+  "SchemaVersion"
+];
 
-    h1 { margin-top: 0; font-size: 27px; }
-    h2 { margin-top: 28px; font-size: 19px; }
+/**
+ * Aseta Script Property:
+ * SPREADSHEET_ID = Google Sheets -tiedoston tunniste.
+ */
+function getPropTestsSpreadsheet_() {
+  const id = PropertiesService
+    .getScriptProperties()
+    .getProperty("SPREADSHEET_ID");
 
-    .intro { color: #586575; }
-
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 14px;
-    }
-
-    label {
-      display: block;
-      margin-bottom: 4px;
-      font-weight: 600;
-      font-size: 14px;
-    }
-
-    input, select, button {
-      width: 100%;
-      min-height: 42px;
-      padding: 9px;
-      border: 1px solid #c8d0d9;
-      border-radius: 6px;
-      font: inherit;
-    }
-
-    .field { min-width: 0; }
-    .full { grid-column: 1 / -1; }
-
-    button {
-      margin-top: 18px;
-      background: #185abd;
-      color: white;
-      border: 0;
-      font-weight: 700;
-      cursor: pointer;
-    }
-
-    button:disabled { opacity: 0.6; cursor: wait; }
-
-    #status {
-      margin-top: 18px;
-      padding: 12px;
-      border-radius: 6px;
-      overflow-wrap: anywhere;
-      white-space: pre-wrap;
-    }
-
-    #status:empty { display: none; }
-    .success { background: #e6f5e9; color: #185b2a; }
-    .error { background: #fff0ef; color: #942b22; }
-    .info { background: #eaf2ff; color: #174785; }
-
-    small { color: #586575; }
-
-    @media (max-width: 480px) {
-      .grid { grid-template-columns: 1fr; }
-      .full { grid-column: auto; }
-      main { padding: 18px; }
-    }
-  </style>
-</head>
-
-<body>
-<main>
-  <h1>RC Prop Calculator</h1>
-  <p class="intro">
-    Potkurien testipenkissä mitattujen tulosten tallennus.
-    Tämä on sovelluksen ensimmäinen testiversio.
-  </p>
-
-  <h2>Testitiedot</h2>
-
-  <form id="testForm">
-    <div class="grid">
-
-      <div class="field">
-        <label for="alias">Nimimerkki</label>
-        <input id="alias" value="TestUser" maxlength="60">
-      </div>
-
-      <div class="field">
-        <label for="source">Tietolähde</label>
-        <select id="source">
-          <option value="OwnTest">Oma mittaus</option>
-          <option value="YouTube">YouTube</option>
-          <option value="Website">Verkkosivu</option>
-          <option value="Publication">Julkaisu</option>
-          <option value="Other">Muu</option>
-        </select>
-      </div>
-
-      <div class="field">
-        <label for="engineMake">Moottorin valmistaja</label>
-        <input id="engineMake" value="Saito" maxlength="80">
-      </div>
-
-      <div class="field">
-        <label for="engineModel">Moottorin malli</label>
-        <input id="engineModel" placeholder="Esim. FG-61TS" maxlength="80">
-      </div>
-
-      <div class="field">
-        <label for="diameter">Potkurin halkaisija (tuumaa)</label>
-        <input id="diameter" type="number" min="1" max="100"
-          step="any" value="25" required>
-      </div>
-
-      <div class="field">
-        <label for="pitch">Potkurin nousu (tuumaa)</label>
-        <input id="pitch" type="number" min="0" max="100"
-          step="any" value="8" required>
-      </div>
-
-      <div class="field">
-        <label for="blades">Lapojen määrä</label>
-        <input id="blades" type="number" min="1" max="12"
-          step="1" value="2" required>
-      </div>
-
-      <div class="field">
-        <label for="rpm">Mitattu kierrosluku (r/min)</label>
-        <input id="rpm" type="number" min="1" max="100000"
-          step="1" value="6000" required>
-      </div>
-
-      <div class="field">
-        <label for="thrust">Työntövoima</label>
-        <input id="thrust" type="number" min="0" step="any"
-          placeholder="Jätä tyhjäksi, jos ei mitattu">
-      </div>
-
-      <div class="field">
-        <label for="thrustUnit">Työntövoiman yksikkö</label>
-        <select id="thrustUnit">
-          <option value="kgf">kgf (kilogrammavoima)</option>
-          <option value="N">N (newton)</option>
-          <option value="lbf">lbf (paunavoima)</option>
-        </select>
-      </div>
-
-      <div class="field">
-        <label for="density">Ilman tiheys (kg/m³)</label>
-        <input id="density" type="number" min="0.1" max="2"
-          step="any" value="1.225" required>
-        <small>Oletusarvo; merkitään oletusarvoksi.</small>
-      </div>
-
-      <div class="field">
-        <label for="date">Mittauspäivä</label>
-        <input id="date" type="date" required>
-      </div>
-
-      <div class="field full">
-        <label for="sourceUrl">Lähteen URL (vaaditaan muiden kuin omien mittausten yhteydessä)</label>
-        <input id="sourceUrl" type="url" placeholder="https://...">
-      </div>
-
-      <div class="field full">
-        <label for="notes">Lisätiedot</label>
-        <input id="notes" maxlength="500" placeholder="Esim. testipenkki ja olosuhteet">
-      </div>
-    </div>
-
-    <button id="saveButton" type="submit">Tallenna testimittaus</button>
-  </form>
-
-  <div id="status" role="status" aria-live="polite"></div>
-</main>
-
-<script>
-  // RC Prop Calculatorin Apps Script -web-sovellus.
-  const API_URL =
-    "https://script.google.com/macros/s/AKfycbx-RV7zMqGDUDkSgu05i4NVzcWNqqj3hNaEkIc_qwFkM3inhPcCCFFJSObIYI_pZtw/exec";
-
-  const form = document.getElementById("testForm");
-  const button = document.getElementById("saveButton");
-  const statusBox = document.getElementById("status");
-
-  // Asetetaan päivämääräksi selaimen paikallinen päivä.
-  const today = new Date();
-  const localDate = [
-    today.getFullYear(),
-    String(today.getMonth() + 1).padStart(2, "0"),
-    String(today.getDate()).padStart(2, "0")
-  ].join("-");
-  document.getElementById("date").value = localDate;
-
-  function showStatus(message, type) {
-    statusBox.className = type;
-    statusBox.textContent = message;
+  if (!id) {
+    throw new Error(
+      "SPREADSHEET_ID puuttuu Script Properties -asetuksista."
+    );
   }
 
-  form.addEventListener("submit", async function(event) {
-    event.preventDefault();
+  return SpreadsheetApp.openById(id);
+}
 
-    const sourceType = document.getElementById("source").value;
-    const sourceUrl = document.getElementById("sourceUrl").value.trim();
-    const thrustText = document.getElementById("thrust").value.trim();
-    const densityText = document.getElementById("density").value.trim();
+/**
+ * Aja tämä funktio kerran Apps Script -editorista.
+ * Luo välilehden ja otsikot vain, jos välilehti puuttuu
+ * tai se on täysin tyhjä. Ei ylikirjoita olemassa olevia tietoja.
+ */
+function initializePropTestsSheet() {
+  const ss = getPropTestsSpreadsheet_();
+  let sheet = ss.getSheetByName(PROP_TESTS_SHEET);
 
-    if (sourceType !== "OwnTest" && !sourceUrl) {
-      showStatus("Anna lähteen URL, kun kyseessä ei ole oma mittaus.", "error");
-      return;
+  if (!sheet) {
+    sheet = ss.insertSheet(PROP_TESTS_SHEET);
+  }
+
+  const lastRow = sheet.getLastRow();
+  const lastCol = sheet.getLastColumn();
+
+  if (lastRow === 0 || lastCol === 0) {
+    sheet.getRange(
+      1, 1, 1, PROP_TESTS_HEADERS.length
+    ).setValues([PROP_TESTS_HEADERS]);
+
+    sheet.setFrozenRows(1);
+    sheet.getRange(
+      1, 1, 1, PROP_TESTS_HEADERS.length
+    ).setFontWeight("bold");
+
+    return {
+      status: "ok",
+      message: "PROP_TESTS-otsikot luotu."
+    };
+  }
+
+  const existing = sheet
+    .getRange(1, 1, 1, lastCol)
+    .getDisplayValues()[0];
+
+  const missing = PROP_TESTS_HEADERS.filter(
+    header => existing.indexOf(header) === -1
+  );
+
+  if (missing.length) {
+    throw new Error(
+      "PROP_TESTS-taulusta puuttuu otsikoita: " +
+      missing.join(", ") +
+      ". Taulukkoa ei muutettu automaattisesti."
+    );
+  }
+
+  return {
+    status: "ok",
+    message: "PROP_TESTS-otsikot tarkistettu."
+  };
+}
+
+/**
+ * Yksinkertainen GET-terveystarkistus.
+ */
+function doGet() {
+  return jsonResponse_({
+    status: "ok",
+    service: "RC Prop Calculator API",
+    version: PROP_TESTS_SCHEMA_VERSION,
+    action: "health"
+  });
+}
+
+/**
+ * POST-rajapinta.
+ * Käytä selaimesta lähetettäessä Content-Type: text/plain;charset=utf-8
+ * ja lähetä JSON tekstinä, jotta vältetään tarpeeton CORS-preflight.
+ */
+function doPost(e) {
+  try {
+    if (!e || !e.postData || !e.postData.contents) {
+      throw new Error("JSON-pyyntö puuttuu.");
     }
 
-    if (thrustText !== "" && Number(thrustText) < 0) {
-      showStatus("Työntövoima ei voi olla negatiivinen.", "error");
-      return;
+    const request = JSON.parse(e.postData.contents);
+
+    if (!request || !request.action) {
+      throw new Error("action puuttuu.");
     }
 
-    if (!densityText || Number(densityText) <= 0) {
-      showStatus("Tarkista ilman tiheys.", "error");
-      return;
+    if (request.action === "listEngines") {
+      return jsonResponse_({
+        status: "ok",
+        action: "listEngines",
+        engines: listEngines_()
+      });
     }
 
-    const test = {
-      TestDate: document.getElementById("date").value,
-      ContributorAlias: document.getElementById("alias").value.trim(),
-      SourceType: sourceType,
-      SourceURL: sourceUrl,
-      EngineMake: document.getElementById("engineMake").value.trim(),
-      EngineModel: document.getElementById("engineModel").value.trim(),
-      PropDiameter_in: Number(document.getElementById("diameter").value),
-      PropPitch_in: Number(document.getElementById("pitch").value),
-      BladeCount: Number(document.getElementById("blades").value),
-      RPM_measured: Number(document.getElementById("rpm").value),
-      ThrustInput_Value: thrustText.trim() === ""
-        ? ""
-        : Number(thrustText),
-      
-      ThrustInput_Unit: thrustText.trim() === ""
-        ? ""
-        : document.getElementById("thrustUnit").value,
-      AirDensity_kg_m3: Number(densityText),
-      AirDensitySource: "STANDARD_ASSUMED",
-      Notes: document.getElementById("notes").value.trim()
+    if (request.action !== "saveTest") {
+      throw new Error('Tuntematon toiminto. Käytä "saveTest" tai "listEngines".');
+    }
+
+    if (!request.test || typeof request.test !== "object") {
+      throw new Error("test-objekti puuttuu.");
+    }
+
+    const result = savePropTest_(request.test);
+
+    return jsonResponse_({
+      status: "ok",
+      action: "saveTest",
+      test: result
+    });
+
+  } catch (err) {
+    return jsonResponse_({
+      status: "error",
+      error: String(err.message || err)
+    });
+  }
+}
+
+/**
+ * Validointi, yksikkömuunnokset, CT0 ja tallennus.
+ */
+function savePropTest_(input) {
+  const test = Object.assign({}, input);
+
+  // Pakolliset kentät: myös ilman työntövoimaa voidaan
+  // tallentaa kierroslukuhavainto.
+  const sourceType = requiredText_(test.SourceType, "SourceType");
+  const allowedSources = [
+    "OwnTest", "YouTube", "Website", "Publication", "Other"
+  ];
+
+  if (allowedSources.indexOf(sourceType) === -1) {
+    throw new Error(
+      "Virheellinen SourceType. Sallitut arvot: " +
+      allowedSources.join(", ")
+    );
+  }
+
+  const diameter = positiveNumber_(
+    test.PropDiameter_in, "PropDiameter_in"
+  );
+  const rpm = positiveNumber_(
+    test.RPM_measured, "RPM_measured"
+  );
+  const blades = positiveNumber_(
+    test.BladeCount, "BladeCount"
+  );
+
+  if (!Number.isInteger(blades) || blades > 8) {
+    throw new Error("BladeCount pitää olla kokonaisluku 1–8.");
+  }
+
+  // Potkurin nousu on pakollinen tässä testitietueen versiossa.
+  const pitch = positiveNumber_(
+    test.PropPitch_in, "PropPitch_in"
+  );
+  const engineCc = optionalNumber_(
+    test.EngineDisplacement_cc, "EngineDisplacement_cc"
+  );
+  const ambientTemp = optionalNumber_(
+    test.AmbientTemp_C, "AmbientTemp_C"
+  );
+  const pressure = optionalNumber_(
+    test.Pressure_hPa, "Pressure_hPa"
+  );
+
+  if (engineCc !== null && engineCc <= 0) {
+    throw new Error("EngineDisplacement_cc pitää olla positiivinen.");
+  }
+
+  if (pressure !== null && pressure <= 0) {
+    throw new Error("Pressure_hPa pitää olla positiivinen.");
+  }
+
+  if (ambientTemp !== null && ambientTemp <= -273.15) {
+    throw new Error("AmbientTemp_C on fysikaalisesti virheellinen.");
+  }
+
+  // Kolmannen osapuolen lähteelle vaaditaan URL,
+  // jos SourceURL ei ole annettu, tietuetta ei hyväksytä.
+  const sourceUrl = optionalText_(test.SourceURL);
+
+  if (sourceType !== "OwnTest" && !sourceUrl) {
+    throw new Error(
+      "Kolmannen osapuolen tietue vaatii SourceURL-osoitteen."
+    );
+  }
+
+  if (sourceUrl && !/^https?:\/\/\S+$/i.test(sourceUrl)) {
+    throw new Error("SourceURL pitää olla kelvollinen HTTP(S)-osoite.");
+  }
+
+  // Työntövoima: alkuperäinen arvo ja yksikkö säilytetään.
+  const thrustInput = optionalNumber_(
+    test.ThrustInput_Value, "ThrustInput_Value"
+  );
+
+  let thrustUnit = optionalText_(test.ThrustInput_Unit);
+  let thrustN = null;
+
+  if (thrustInput !== null) {
+    if (thrustInput <= 0) {
+      throw new Error("ThrustInput_Value pitää olla positiivinen.");
+    }
+
+    thrustUnit = thrustUnit || "N";
+
+    const factors = {
+      N: 1,
+      kgf: 9.80665,
+      lbf: 4.4482216152605
     };
 
-    if (!test.TestDate || !test.PropDiameter_in ||
-        !test.PropPitch_in || !test.BladeCount || !test.RPM_measured) {
-      showStatus("Tarkista pakolliset mittaustiedot.", "error");
-      return;
+    if (!Object.prototype.hasOwnProperty.call(factors, thrustUnit)) {
+      throw new Error("ThrustInput_Unit: käytä N, kgf tai lbf.");
     }
 
-    button.disabled = true;
-    button.textContent = "Tallennetaan...";
-    showStatus("Lähetetään tietoja rajapintaan...", "info");
-    
-    // Tarkistetaan pakolliset mittaustiedot
-    const errors = [];
-    
-    const diameter = Number(test.PropDiameter_in);
-    const pitch = Number(test.PropPitch_in);
-    const blades = Number(test.BladeCount);
-    const rpm = Number(test.RPM_measured);
-    
-    if (!Number.isFinite(diameter) || diameter <= 0) {
-      errors.push("Potkurin halkaisijan pitää olla positiivinen luku.");
+    thrustN = thrustInput * factors[thrustUnit];
+  } else {
+    // Ilman työntövoimaa yksikköä ei tallenneta.
+    // Tyhjä tai pelkistä välilyönneistä koostuva arvo sallitaan.
+    thrustUnit = "";
+  }
+
+  // Ilman tiheys: käytä ensin suoraan annettua arvoa.
+  // Muuten laske likimääräinen kuivan ilman tiheys
+  // lämpötilasta ja ilmanpaineesta, jos molemmat tunnetaan.
+  let density = optionalNumber_(
+    test.AirDensity_kg_m3, "AirDensity_kg_m3"
+  );
+  let densitySource = optionalText_(test.AirDensitySource);
+
+  if (density !== null) {
+    if (density <= 0 || density > 2) {
+      throw new Error("AirDensity_kg_m3 on epäuskottava.");
     }
-    
-    if (!Number.isFinite(pitch) || pitch <= 0) {
-      errors.push("Potkurin nousun pitää olla positiivinen luku.");
-    }
-    
-    if (!Number.isInteger(blades) || blades < 1 || blades > 8) {
-      errors.push("Lapojen määrän pitää olla kokonaisluku väliltä 1–8.");
-    }
-    
-    if (!Number.isFinite(rpm) || rpm <= 0) {
-      errors.push("Kierrosluvun pitää olla positiivinen luku.");
-    }
-    
-    if (errors.length > 0) {
-      showStatus(errors.join("\n"), "error");
-      button.disabled = false;
-      button.textContent = "Tallenna testimittaus";
-      return;
-    }
-    
-    try {
-      const response = await fetch(API_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "text/plain;charset=utf-8"
-        },
-        body: JSON.stringify({
-          action: "saveTest",
-          test: test
-        })
-      });
 
-      const responseText = await response.text();
-      let result;
+    densitySource = densitySource || "USER_ENTERED";
 
-      try {
-        result = JSON.parse(responseText);
-      } catch {
-        throw new Error(
-          "Palvelin ei palauttanut JSON-vastausta. Tarkista API-julkaisu."
-        );
-      }
+  } else if (ambientTemp !== null && pressure !== null) {
+    const kelvin = ambientTemp + 273.15;
+    density = (pressure * 100) / (287.05 * kelvin);
+    densitySource = "CALCULATED_DRY_AIR";
 
-      if (!response.ok || result.status === "error" || result.error) {
-        throw new Error(result.error || "Tallennus epäonnistui.");
-      }
+  } else {
+    densitySource = densitySource || "UNKNOWN";
+  }
 
-      if (result.status !== "ok") {
-        throw new Error("Palvelimen vastaus oli odottamaton: " + responseText);
-      }
+  const allowedDensitySources = [
+    "MEASURED",
+    "USER_ENTERED",
+    "CALCULATED_DRY_AIR",
+    "STANDARD_ASSUMED",
+    "UNKNOWN"
+  ];
 
-      const saved = result.test || {};
+  if (allowedDensitySources.indexOf(densitySource) === -1) {
+    throw new Error(
+      "Virheellinen AirDensitySource: " + densitySource
+    );
+  }
 
-      showStatus(
-        "Tallennus onnistui!\n" +
-        "Testitunnus: " + (saved.TestID || "ei palautettu") + "\n" +
-        "Tila: " + (saved.DataStatus || "ei ilmoitettu") + "\n" +
-        "Työntövoima (N): " +
-          (saved.Thrust_measured_N ?? "ei mitattu") + "\n" +
-        "CT0: " + (saved.CT0_calculated ?? "ei laskettu"),
-        "success"
-      );
+  if (densitySource === "STANDARD_ASSUMED" && density === null) {
+    density = 1.225;
+  }
 
-    } catch (error) {
-      showStatus(
-        "Yhteys tai tallennus epäonnistui.\n" +
-        error.message + "\n\n" +
-        "Jos virhe mainitsee CORS- tai fetch-ongelman, tarkistamme " +
-        "seuraavaksi selaimen ja Apps Scriptin välisen yhteyden.",
-        "error"
-      );
-    } finally {
-      button.disabled = false;
-      button.textContent = "Tallenna testimittaus";
-    }
-  });
-</script>
-</body>
-</html>
+  if (density !== null && (density <= 0 || density > 2)) {
+    throw new Error("Ilman tiheys on sallitun alueen ulkopuolella.");
+  }
+
+  // Laske CT0 vain mitatusta työntövoimasta.
+  // CT0 = T / (rho * n^2 * D^4)
+  let ct0 = null;
+
+  if (thrustN !== null && density !== null) {
+    const n = rpm / 60;
+    const diameterM = diameter * 0.0254;
+    ct0 = thrustN / (
+      density * Math.pow(n, 2) * Math.pow(diameterM, 4)
+    );
+  }
+
+  // Laatutunnisteet.
+  const flags = [];
+
+  if (thrustN === null) flags.push("MISSING_THRUST");
+  if (density === null) flags.push("MISSING_AIR_DENSITY");
+  if (densitySource === "STANDARD_ASSUMED") {
+    flags.push("ASSUMED_DENSITY");
+  }
+  if (sourceType !== "OwnTest" && !sourceUrl) {
+    flags.push("MISSING_SOURCE");
+  }
+  if (!pitch) flags.push("MISSING_PITCH");
+
+  // ISO-päivämäärä validoidaan ennen moottorirekisterin mahdollista muutosta.
+  const testDate = optionalDate_(test.TestDate);
+
+  // Hae olemassa oleva moottori tai rekisteröi uusi.
+  // Jos vanha asiakas ei lähetä moottoritietoja, vanha tallennustapa toimii edelleen.
+  const engine = resolveEngine_(test, engineCc);
+
+  const record = {
+    TestID: "PT-" + Utilities.getUuid(),
+    TestDate: testDate,
+    RecordCreatedAt: new Date().toISOString(),
+    ContributorAlias: optionalText_(test.ContributorAlias),
+    SourceType: sourceType,
+    SourceURL: sourceUrl,
+    EngineID: engine ? engine.EngineID : "",
+    EngineMake: engine ? engine.EngineMake : optionalText_(test.EngineMake),
+    EngineModel: engine ? engine.EngineModel : optionalText_(test.EngineModel),
+    EngineDisplacement_cc: engine ? engine.EngineDisplacement_cc : engineCc,
+    EngineType: engine ? engine.EngineType : optionalText_(test.EngineType),
+    FuelType: engine ? engine.FuelType : optionalText_(test.FuelType),
+    PropMake: optionalText_(test.PropMake),
+    PropModel: optionalText_(test.PropModel),
+    PropDiameter_in: diameter,
+    PropPitch_in: pitch,
+    BladeCount: blades,
+    RPM_measured: rpm,
+    ThrustInput_Value: thrustInput,
+    ThrustInput_Unit: thrustUnit,
+    Thrust_measured_N: thrustN,
+    AmbientTemp_C: ambientTemp,
+    Pressure_hPa: pressure,
+    AirDensity_kg_m3: density,
+    AirDensitySource: densitySource,
+    InstrumentType: optionalText_(test.InstrumentType),
+    InstrumentAccuracy: optionalText_(test.InstrumentAccuracy),
+    TestSetup: optionalText_(test.TestSetup),
+    Notes: optionalText_(test.Notes),
+    DataStatus: "UNREVIEWED",
+    CT0_calculated: ct0,
+    DataQualityFlags: flags.join(";"),
+    SchemaVersion: PROP_TESTS_SCHEMA_VERSION
+  };
+
+  // Otsikoihin perustuva sarakekartta.
+  const ss = getPropTestsSpreadsheet_();
+  const sheet = ss.getSheetByName(PROP_TESTS_SHEET);
+
+  if (!sheet) {
+    throw new Error(
+      "PROP_TESTS-välilehti puuttuu. Aja initializePropTestsSheet()."
+    );
+  }
+
+  const lastCol = sheet.getLastColumn();
+
+  if (lastCol < 1) {
+    throw new Error(
+      "PROP_TESTS-otsikot puuttuvat. Aja initializePropTestsSheet()."
+    );
+  }
+
+  const headers = sheet.getRange(1, 1, 1, lastCol)
+    .getDisplayValues()[0];
+
+  const missingHeaders = PROP_TESTS_HEADERS.filter(
+    header => headers.indexOf(header) === -1
+  );
+
+  if (missingHeaders.length) {
+    throw new Error(
+      "PROP_TESTS-taulusta puuttuu otsikoita: " +
+      missingHeaders.join(", ")
+    );
+  }
+
+  const row = headers.map(header =>
+    Object.prototype.hasOwnProperty.call(record, header)
+      ? (record[header] === null ? "" : record[header])
+      : ""
+  );
+
+  // Estä samanaikaisten kirjoitusten päällekkäisyydet.
+  const lock = LockService.getScriptLock();
+  lock.waitLock(15000);
+
+  try {
+    sheet.appendRow(row);
+    SpreadsheetApp.flush();
+  } finally {
+    lock.releaseLock();
+  }
+
+  // Palauta asiakkaalle olennaiset arvot.
+  return {
+    TestID: record.TestID,
+    DataStatus: record.DataStatus,
+    Thrust_measured_N: record.Thrust_measured_N,
+    AirDensity_kg_m3: record.AirDensity_kg_m3,
+    AirDensitySource: record.AirDensitySource,
+    CT0_calculated: record.CT0_calculated,
+    DataQualityFlags: record.DataQualityFlags
+  };
+}
+
+/* ---------- Moottorirekisteri ENGINES ---------- */
+
+function getEnginesSheet_() {
+  const ss = getPropTestsSpreadsheet_();
+  const sheet = ss.getSheetByName(ENGINES_SHEET);
+  if (!sheet) throw new Error("ENGINES-välilehti puuttuu.");
+  if (sheet.getLastRow() < 1) throw new Error("ENGINES-taulun otsikkorivi puuttuu.");
+
+  const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getDisplayValues()[0];
+  const missing = ENGINES_HEADERS.filter(h => headers.indexOf(h) === -1);
+  if (missing.length) throw new Error("ENGINES-taulusta puuttuu otsikoita: " + missing.join(", "));
+  return { sheet: sheet, headers: headers };
+}
+
+function listEngines_() {
+  const info = getEnginesSheet_();
+  const sheet = info.sheet;
+  if (sheet.getLastRow() < 2) return [];
+
+  const rows = sheet.getRange(2, 1, sheet.getLastRow() - 1, info.headers.length).getValues();
+  const idx = {};
+  info.headers.forEach((h, i) => idx[h] = i);
+
+  return rows.filter(row => optionalText_(row[idx.EngineID])).map(row => ({
+    EngineID: optionalText_(row[idx.EngineID]),
+    EngineMake: optionalText_(row[idx.EngineMake]),
+    EngineModel: optionalText_(row[idx.EngineModel]),
+    EngineDisplacement_cc: row[idx.EngineDisplacement_cc] === "" ? null : row[idx.EngineDisplacement_cc],
+    EngineType: optionalText_(row[idx.EngineType]),
+    FuelType: optionalText_(row[idx.FuelType])
+  })).sort((a, b) => (a.EngineMake + " " + a.EngineModel).localeCompare(b.EngineMake + " " + b.EngineModel));
+}
+
+function normalizeEngineKey_(value) {
+  return optionalText_(value).toLowerCase().replace(/[.]/g, "").replace(/\s+/g, " ").trim();
+}
+
+function resolveEngine_(test, engineCc) {
+  const requestedId = optionalText_(test.EngineID);
+  const make = optionalText_(test.EngineMake);
+  const model = optionalText_(test.EngineModel);
+  const hasName = !!(make && model);
+
+  if (!requestedId && !hasName) return null;
+
+  const info = getEnginesSheet_();
+  const sheet = info.sheet;
+  const headers = info.headers;
+  const idx = {};
+  headers.forEach((h, i) => idx[h] = i);
+  const lastRow = sheet.getLastRow();
+  const rows = lastRow >= 2 ? sheet.getRange(2, 1, lastRow - 1, headers.length).getValues() : [];
+
+  if (requestedId) {
+    const matches = rows.filter(row => optionalText_(row[idx.EngineID]) === requestedId);
+    if (matches.length !== 1) throw new Error("EngineID:tä ei löydy tai se ei ole yksilöllinen: " + requestedId);
+    return engineFromRow_(matches[0], idx);
+  }
+
+  const makeKey = normalizeEngineKey_(make);
+  const modelKey = normalizeEngineKey_(model);
+  const matches = rows.filter(row =>
+    normalizeEngineKey_(row[idx.EngineMake]) === makeKey &&
+    normalizeEngineKey_(row[idx.EngineModel]) === modelKey
+  );
+
+  if (matches.length > 1) {
+    throw new Error("ENGINES-taulussa on useita samoja valmistaja/malli-merkintöjä. Siivoa kaksoiskappaleet ennen tallennusta.");
+  }
+  if (matches.length === 1) return engineFromRow_(matches[0], idx);
+
+  const newEngine = {
+    EngineID: "ENG-" + Utilities.getUuid().replace(/-/g, "").slice(0, 12).toUpperCase(),
+    EngineMake: make,
+    EngineModel: model,
+    EngineDisplacement_cc: engineCc,
+    EngineType: optionalText_(test.EngineType),
+    FuelType: optionalText_(test.FuelType)
+  };
+
+  const lock = LockService.getScriptLock();
+  lock.waitLock(15000);
+  try {
+    // Tarkista uudelleen lukon sisällä, ettei rinnakkainen pyyntö luonut samaa moottoria.
+    const refreshedLastRow = sheet.getLastRow();
+    const refreshed = refreshedLastRow >= 2 ? sheet.getRange(2, 1, refreshedLastRow - 1, headers.length).getValues() : [];
+    const nowMatches = refreshed.filter(row =>
+      normalizeEngineKey_(row[idx.EngineMake]) === makeKey &&
+      normalizeEngineKey_(row[idx.EngineModel]) === modelKey
+    );
+    if (nowMatches.length > 1) throw new Error("ENGINES-taulussa on kaksoiskappaleita samalle moottorille.");
+    if (nowMatches.length === 1) return engineFromRow_(nowMatches[0], idx);
+
+    sheet.appendRow(headers.map(h => Object.prototype.hasOwnProperty.call(newEngine, h) ? newEngine[h] : ""));
+    SpreadsheetApp.flush();
+  } finally {
+    lock.releaseLock();
+  }
+  return newEngine;
+}
+
+function engineFromRow_(row, idx) {
+  return {
+    EngineID: optionalText_(row[idx.EngineID]),
+    EngineMake: optionalText_(row[idx.EngineMake]),
+    EngineModel: optionalText_(row[idx.EngineModel]),
+    EngineDisplacement_cc: row[idx.EngineDisplacement_cc] === "" ? null : row[idx.EngineDisplacement_cc],
+    EngineType: optionalText_(row[idx.EngineType]),
+    FuelType: optionalText_(row[idx.FuelType])
+  };
+}
+
+/* ---------- Apufunktiot ---------- */
+
+function requiredText_(value, fieldName) {
+  const text = optionalText_(value);
+  if (!text) throw new Error(fieldName + " puuttuu.");
+  return text;
+}
+
+function optionalText_(value) {
+  if (value === null || value === undefined) return "";
+  return String(value).trim();
+}
+
+function optionalNumber_(value, fieldName) {
+  if (value === null || value === undefined) {
+    return null;
+  }
+
+  // Tyhjä merkkijono tai pelkät välilyönnit tarkoittavat puuttuvaa arvoa.
+  if (typeof value === "string" && value.trim() === "") {
+    return null;
+  }
+
+  const number = Number(value);
+
+  if (!Number.isFinite(number)) {
+    throw new Error(fieldName + " pitää olla numero.");
+  }
+
+  return number;
+}
+
+function positiveNumber_(value, fieldName) {
+  const number = optionalNumber_(value, fieldName);
+
+  if (number === null || number <= 0) {
+    throw new Error(fieldName + " pitää olla positiivinen numero.");
+  }
+
+  return number;
+}
+
+function optionalDate_(value) {
+  if (value === null || value === undefined || value === "") {
+    return "";
+  }
+
+  const text = String(value).trim();
+
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(text)) {
+    throw new Error("TestDate pitää olla muodossa YYYY-MM-DD.");
+  }
+
+  const date = new Date(text + "T00:00:00Z");
+
+  if (
+    isNaN(date.getTime()) ||
+    date.toISOString().slice(0, 10) !== text
+  ) {
+    throw new Error("TestDate ei ole kelvollinen päivämäärä.");
+  }
+
+  return text;
+}
+
+function jsonResponse_(data) {
+  return ContentService
+    .createTextOutput(JSON.stringify(data))
+    .setMimeType(ContentService.MimeType.JSON);
+}
