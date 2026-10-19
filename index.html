@@ -57,7 +57,7 @@
       <div class="field"><label for="fuelType">Polttoaine</label><select id="fuelType"><option value="">Ei tiedossa / ei ilmoiteta</option><option value="glow">Hehkutulppapolttoaine</option><option value="gasoline">Bensiini</option><option value="diesel">Diesel</option><option value="other">Muu</option></select></div>
 
       <div class="field"><label for="diameter">Potkurin halkaisija (tuumaa)</label><input id="diameter" type="number" min="1" max="100" step="any" value="25" required></div>
-      <div class="field"><label for="pitch">Potkurin nousu (tuumaa)</label><input id="pitch" type="number" min="0" max="100" step="any" value="8"></div>
+      <div class="field"><label for="pitch">Potkurin nousu (tuumaa) *</label><input id="pitch" type="number" min="0.1" max="100" step="any" value="8" required></div>
       <div class="field"><label for="blades">Lapojen määrä</label><input id="blades" type="number" min="1" max="8" step="1" value="2" required></div>
       <div class="field"><label for="rpm">Mitattu kierrosluku (r/min)</label><input id="rpm" type="number" min="1" max="100000" step="1" value="6000" required></div>
       <div class="field"><label for="thrust">Työntövoima</label><input id="thrust" type="number" min="0" step="any" placeholder="Jätä tyhjäksi, jos ei mitattu"></div>
@@ -425,7 +425,8 @@
     const errors = [];
     if (!test.TestDate) errors.push("Anna mittauspäivä.");
     if (!Number.isFinite(test.PropDiameter_in) || test.PropDiameter_in <= 0) errors.push("Potkurin halkaisijan pitää olla positiivinen luku.");
-    if (pitchText !== "" && (!Number.isFinite(test.PropPitch_in) || test.PropPitch_in <= 0)) errors.push("Potkurin nousun pitää olla positiivinen luku tai kentän pitää olla tyhjä.");
+    if (pitchText === "") errors.push("Potkurin nousu on pakollinen tieto.");
+    else if (!Number.isFinite(test.PropPitch_in) || test.PropPitch_in <= 0) errors.push("Potkurin nousun pitää olla positiivinen luku.");
     if (!Number.isInteger(test.BladeCount) || test.BladeCount < 1 || test.BladeCount > 8) errors.push("Lapojen määrän pitää olla kokonaisluku väliltä 1–8.");
     if (!Number.isFinite(test.RPM_measured) || test.RPM_measured <= 0) errors.push("Kierrosluvun pitää olla positiivinen luku.");
     if (test.EngineDisplacement_cc !== "" && (!Number.isFinite(test.EngineDisplacement_cc) || test.EngineDisplacement_cc <= 0)) errors.push("Iskutilavuuden pitää olla positiivinen luku tai tyhjä.");
