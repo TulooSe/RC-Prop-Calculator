@@ -199,23 +199,43 @@
   const propellerSelect = document.getElementById("propellerSelect");
   let propellers = [];
   
+  function selectedPropellerMatchesInputs(prop) {
+    if (!prop) return false;
+    const diameter = Number(document.getElementById("diameter").value);
+    const pitch = Number(document.getElementById("pitch").value);
+    const blades = Number(document.getElementById("blades").value);
+    return Number.isFinite(diameter) &&
+      Number.isFinite(pitch) &&
+      Number.isFinite(blades) &&
+      Math.abs(diameter - Number(prop.Diameter_in)) < 1e-9 &&
+      Math.abs(pitch - Number(prop.Pitch_in)) < 1e-9 &&
+      Math.abs(blades - Number(prop.Blades)) < 1e-9;
+  }
+
   propellerSelect.addEventListener("change", () => {
     const prop = propellers.find(
       item => item.PropellerID === propellerSelect.value
     );
-  
+
     if (!prop) return;
-  
-    document.getElementById("diameter").value =
-      prop.Diameter_in ?? "";
-  
-    document.getElementById("pitch").value =
-      prop.Pitch_in ?? "";
-  
-    document.getElementById("blades").value =
-      prop.Blades ?? "";
+
+    document.getElementById("diameter").value = prop.Diameter_in ?? "";
+    document.getElementById("pitch").value = prop.Pitch_in ?? "";
+    document.getElementById("blades").value = prop.Blades ?? "";
   });
-  
+
+  // Jos rekisteripotkurin mittoja muutetaan käsin, irrota sen ID.
+  ["diameter", "pitch", "blades"].forEach(id => {
+    document.getElementById(id).addEventListener("change", () => {
+      const selected = propellers.find(
+        item => item.PropellerID === propellerSelect.value
+      );
+      if (selected && !selectedPropellerMatchesInputs(selected)) {
+        propellerSelect.value = "";
+      }
+    });
+  });
+
   async function loadPropellers() {
     try {
       const result = await apiPost({ action: "listProps" });
@@ -481,15 +501,30 @@
       AmbientTemp_C: ambientTempInput.value.trim() === "" ? "" : Number(ambientTempInput.value),
       Pressure_hPa: pressureInput.value.trim() === "" ? "" : Number(pressureInput.value),
       Notes: [document.getElementById("notes").value.trim(), weatherProvenance].filter(Boolean).join(" | "),
-      PropellerID: propellerSelect.value,
-      PropMake: propellerSelect.value
-        ? propellers.find(p => p.PropellerID === propellerSelect.value)
-            ?.PropellerBrand || ""
-        : "",
-      PropModel: propellerSelect.value
-        ? propellers.find(p => p.PropellerID === propellerSelect.value)
-            ?.PropellerModel || ""
-        : "",
+      PropellerID: (() => {
+        const selected = propellers.find(
+          p => p.PropellerID === propellerSelect.value
+        );
+        return selected && selectedPropellerMatchesInputs(selected)
+          ? selected.PropellerID
+          : "";
+      })(),
+      PropMake: (() => {
+        const selected = propellers.find(
+          p => p.PropellerID === propellerSelect.value
+        );
+        return selected && selectedPropellerMatchesInputs(selected)
+          ? selected.PropellerBrand || ""
+          : "";
+      })(),
+      PropModel: (() => {
+        const selected = propellers.find(
+          p => p.PropellerID === propellerSelect.value
+        );
+        return selected && selectedPropellerMatchesInputs(selected)
+          ? selected.PropellerModel || ""
+          : "";
+      })(),
     };
 
     const errors = [];
