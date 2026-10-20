@@ -480,7 +480,7 @@
       AirDensitySource: densitySource,
       AmbientTemp_C: ambientTempInput.value.trim() === "" ? "" : Number(ambientTempInput.value),
       Pressure_hPa: pressureInput.value.trim() === "" ? "" : Number(pressureInput.value),
-      Notes: [document.getElementById("notes").value.trim(), weatherProvenance].filter(Boolean).join(" | ")
+      Notes: [document.getElementById("notes").value.trim(), weatherProvenance].filter(Boolean).join(" | "),
       PropellerID: propellerSelect.value,
       PropMake: propellerSelect.value
         ? propellers.find(p => p.PropellerID === propellerSelect.value)
