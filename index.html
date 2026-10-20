@@ -48,7 +48,16 @@
     <div class="grid">
       <div class="field"><label for="alias">Nimimerkki</label><input id="alias" value="TestUser" maxlength="60"></div>
       <div class="field"><label for="source">Tietolähde</label><select id="source"><option value="OwnTest">Oma mittaus</option><option value="YouTube">YouTube</option><option value="Website">Verkkosivu</option><option value="Publication">Julkaisu</option><option value="Other">Muu</option></select></div>
-
+      <div class="field full">
+        <label for="propellerSelect">Potkuri rekisterissä</label>
+        <select id="propellerSelect">
+          <option value="">Uusi potkuri – syötä mitat käsin</option>
+        </select>
+        <small>
+          Rekisterin tiedot ovat alustavia. Tarkista potkurin malli ja mitat
+          alkuperäisestä lähteestä.
+        </small>
+      </div>
       <div class="field full"><label for="engineSelect">Moottori rekisterissä</label><select id="engineSelect"><option value="">Uusi moottori – syötä tiedot alle</option></select><small>Valitse olemassa oleva moottori tai jätä uuden moottorin syöttö käyttöön.</small></div>
       <div class="field"><label for="engineMake">Moottorin valmistaja</label><input id="engineMake" placeholder="Esim. Saito" maxlength="80" required></div>
       <div class="field"><label for="engineModel">Moottorin malli</label><input id="engineModel" placeholder="Esim. FG-61TS" maxlength="80" required></div>
@@ -187,7 +196,59 @@
     cell.textContent = value == null || value === "" ? "—" : String(value);
     row.appendChild(cell);
   }
-
+  const propellerSelect = document.getElementById("propellerSelect");
+  let propellers = [];
+  
+  propellerSelect.addEventListener("change", () => {
+    const prop = propellers.find(
+      item => item.PropellerID === propellerSelect.value
+    );
+  
+    if (!prop) return;
+  
+    document.getElementById("diameter").value =
+      prop.Diameter_in ?? "";
+  
+    document.getElementById("pitch").value =
+      prop.Pitch_in ?? "";
+  
+    document.getElementById("blades").value =
+      prop.Blades ?? "";
+  });
+  
+  async function loadPropellers() {
+    try {
+      const result = await apiPost({ action: "listProps" });
+      propellers = Array.isArray(result.propellers)
+        ? result.propellers
+        : [];
+  
+      propellerSelect.replaceChildren(
+        new Option("Uusi potkuri – syötä mitat käsin", "")
+      );
+  
+      propellers.forEach(prop => {
+        const option = new Option(
+          `${prop.PropellerBrand} ${prop.PropellerModel} · ` +
+          `${prop.Diameter_in} × ${prop.Pitch_in} · ` +
+          `${prop.Blades} lapaa` +
+          (prop.DataStatus === "UNVERIFIED"
+            ? " · tarkistamaton"
+            : ""),
+          prop.PropellerID
+        );
+  
+        propellerSelect.appendChild(option);
+      });
+    } catch (error) {
+      showStatus(
+        "Potkurirekisteriä ei saatu ladattua: " + error.message,
+        "error"
+      );
+    }
+  }
+  loadPropellers();
+  
   function qualityFlagLabel(flag) {
     const labels = {
       MISSING_THRUST: "Työntövoimaa ei ole ilmoitettu",
@@ -420,6 +481,15 @@
       AmbientTemp_C: ambientTempInput.value.trim() === "" ? "" : Number(ambientTempInput.value),
       Pressure_hPa: pressureInput.value.trim() === "" ? "" : Number(pressureInput.value),
       Notes: [document.getElementById("notes").value.trim(), weatherProvenance].filter(Boolean).join(" | ")
+      PropellerID: propellerSelect.value,
+      PropMake: propellerSelect.value
+        ? propellers.find(p => p.PropellerID === propellerSelect.value)
+            ?.PropellerBrand || ""
+        : "",
+      PropModel: propellerSelect.value
+        ? propellers.find(p => p.PropellerID === propellerSelect.value)
+            ?.PropellerModel || ""
+        : "",
     };
 
     const errors = [];
