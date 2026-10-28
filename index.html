@@ -13,11 +13,13 @@
   <p class="intro">Polttomoottorikäyttöisten RC-lennokkien potkuritestien tallennus.</p>
   <h2>Testitiedot</h2>
   <form id="testForm">
-    <div class="grid">
-      <div class="section-title full">Lähde ja tunnistetiedot</div>
-      <div class="field"><label for="alias">Nimimerkki</label><input id="alias" value="TestUser" maxlength="60"></div>
-      <div class="field"><label for="source">Tietolähde</label><select id="source"><option value="OwnTest">Oma mittaus</option><option value="YouTube">YouTube</option><option value="Website">Verkkosivu</option><option value="Publication">Julkaisu</option><option value="Other">Muu</option></select></div>
-      <div class="field wide">
+    <div class="form-groups">
+<section class="field-group">
+      <h3>Lähde ja tunnistetiedot</h3>
+      <div class="field-list">
+<div class="field-row"><label for="alias">Nimimerkki</label><input id="alias" value="TestUser" maxlength="60"></div>
+      <div class="field-row"><label for="source">Tietolähde</label><select id="source"><option value="OwnTest">Oma mittaus</option><option value="YouTube">YouTube</option><option value="Website">Verkkosivu</option><option value="Publication">Julkaisu</option><option value="Other">Muu</option></select></div>
+      <div class="field-row">
         <label for="propellerSelect">Potkuri rekisterissä</label>
         <select id="propellerSelect">
           <option value="">Uusi potkuri – syötä mitat käsin</option>
@@ -27,38 +29,51 @@
           alkuperäisestä lähteestä.
         </small>
       </div>
-      <div class="field wide"><label for="engineSelect">Moottori rekisterissä</label><select id="engineSelect"><option value="">Uusi moottori – syötä tiedot alle</option></select><small>Valitse olemassa oleva moottori tai jätä uuden moottorin syöttö käyttöön.</small></div>
-      <div class="section-title full">Moottorin tiedot</div>
-      <div class="field"><label for="engineMake">Moottorin valmistaja</label><input id="engineMake" placeholder="Esim. Saito" maxlength="80" required></div>
-      <div class="field"><label for="engineModel">Moottorin malli</label><input id="engineModel" placeholder="Esim. FG-61TS" maxlength="80" required></div>
-      <div class="field"><label for="engineCc">Iskutilavuus (cm³)</label><input id="engineCc" type="number" min="0.1" max="1000" step="any" placeholder="Esim. 10.0"></div>
-      <div class="field"><label for="engineType">Moottorityyppi</label><select id="engineType"><option value="">Ei tiedossa / ei ilmoiteta</option><option value="2-stroke">2-tahti</option><option value="4-stroke">4-tahti</option><option value="rotary">Wankel / rotaatiomoottori</option><option value="other-ic">Muu polttomoottori</option></select></div>
-      <div class="field"><label for="fuelType">Polttoaine</label><select id="fuelType"><option value="">Ei tiedossa / ei ilmoiteta</option><option value="glow">Hehkutulppapolttoaine</option><option value="gasoline">Bensiini</option><option value="diesel">Diesel</option><option value="other">Muu</option></select></div>
-
-      <div class="section-title full">Potkuri ja mittaustulos</div>
-      <div class="field"><label for="diameter">Potkurin halkaisija (tuumaa)</label><input id="diameter" type="number" min="1" max="100" step="any" value="25" required></div>
-      <div class="field"><label for="pitch">Potkurin nousu (tuumaa) *</label><input id="pitch" type="number" min="0.1" max="100" step="any" value="8" required></div>
-      <div class="field"><label for="blades">Lapojen määrä</label><input id="blades" type="number" min="1" max="8" step="1" value="2" required></div>
-      <div class="field"><label for="rpm">Mitattu kierrosluku (r/min)</label><input id="rpm" type="number" min="1" max="100000" step="1" value="6000" required></div>
-      <div class="field"><label for="thrust">Työntövoima</label><input id="thrust" type="number" min="0" step="any" placeholder="Jätä tyhjäksi, jos ei mitattu"></div>
-      <div class="field"><label for="thrustUnit">Työntövoiman yksikkö</label><select id="thrustUnit"><option value="kgf">kgf (kilogrammavoima)</option><option value="N">N (newton)</option><option value="lbf">lbf (paunavoima)</option></select></div>
-      <div class="section-title full">Mittausolosuhteet ja lähde</div>
-      <div class="field"><label for="density">Ilman tiheys (kg/m³)</label><input id="density" type="number" min="0.1" max="2" step="any" value="1.225" required><small id="densityHelp">Oletusarvo; merkitään oletusarvoksi.</small></div>
-      <div class="field"><label for="ct0Estimate">CT₀-oletus työntövoiman arviointiin</label><input id="ct0Estimate" type="number" min="0.001" max="1" step="0.001" value="0.075" required><small>Alustava yleisoletus, ei mitattu eikä potkurikohtaisesti validoitu kerroin. Säädä vain, jos käytössä on perusteltu arvio.</small></div>
-      <div class="field"><label for="date">Mittauspäivä</label><input id="date" type="date" required></div>
-      <div class="field"><label for="ambientTemp">Lämpötila mittauspaikalla (°C)</label><input id="ambientTemp" type="number" min="-80" max="60" step="any" placeholder="Jos tiedossa"></div>
-      <div class="field"><label for="pressure">Ilmanpaine (hPa)</label><input id="pressure" type="number" min="300" max="1100" step="any" placeholder="Jos tiedossa"></div>
-      <div class="field full"><label for="sourceUrl">Lähteen URL (vaaditaan muiden kuin omien mittausten yhteydessä)</label><input id="sourceUrl" type="url" placeholder="https://..."></div>
-      <div class="field full"><label for="notes">Lisätiedot</label><input id="notes" maxlength="500" placeholder="Esim. testipenkki ja olosuhteet"></div>
+      <div class="field-row"><label for="engineSelect">Moottori rekisterissä</label><select id="engineSelect"><option value="">Uusi moottori – syötä tiedot alle</option></select><small>Valitse olemassa oleva moottori tai jätä uuden moottorin syöttö käyttöön.</small></div>
+      </div>
+    </section>
+<section class="field-group">
+      <h3>Moottorin tiedot</h3>
+      <div class="field-list">
+<div class="field-row"><label for="engineMake">Moottorin valmistaja</label><input id="engineMake" placeholder="Esim. Saito" maxlength="80" required></div>
+      <div class="field-row"><label for="engineModel">Moottorin malli</label><input id="engineModel" placeholder="Esim. FG-61TS" maxlength="80" required></div>
+      <div class="field-row"><label for="engineCc">Iskutilavuus (cm³)</label><input id="engineCc" type="number" min="0.1" max="1000" step="any" placeholder="Esim. 10.0"></div>
+      <div class="field-row"><label for="engineType">Moottorityyppi</label><select id="engineType"><option value="">Ei tiedossa / ei ilmoiteta</option><option value="2-stroke">2-tahti</option><option value="4-stroke">4-tahti</option><option value="rotary">Wankel / rotaatiomoottori</option><option value="other-ic">Muu polttomoottori</option></select></div>
+      <div class="field-row"><label for="fuelType">Polttoaine</label><select id="fuelType"><option value="">Ei tiedossa / ei ilmoiteta</option><option value="glow">Hehkutulppapolttoaine</option><option value="gasoline">Bensiini</option><option value="diesel">Diesel</option><option value="other">Muu</option></select></div>
+      </div>
+    </section>
+<section class="field-group">
+      <h3>Potkuri ja mittaustulos</h3>
+      <div class="field-list">
+<div class="field-row"><label for="diameter">Potkurin halkaisija (tuumaa)</label><input id="diameter" type="number" min="1" max="100" step="any" value="25" required></div>
+      <div class="field-row"><label for="pitch">Potkurin nousu (tuumaa) *</label><input id="pitch" type="number" min="0.1" max="100" step="any" value="8" required></div>
+      <div class="field-row"><label for="blades">Lapojen määrä</label><input id="blades" type="number" min="1" max="8" step="1" value="2" required></div>
+      <div class="field-row"><label for="rpm">Mitattu kierrosluku (r/min)</label><input id="rpm" type="number" min="1" max="100000" step="1" value="6000" required></div>
+      <div class="field-row"><label for="thrust">Työntövoima</label><input id="thrust" type="number" min="0" step="any" placeholder="Jätä tyhjäksi, jos ei mitattu"></div>
+      <div class="field-row"><label for="thrustUnit">Työntövoiman yksikkö</label><select id="thrustUnit"><option value="kgf">kgf (kilogrammavoima)</option><option value="N">N (newton)</option><option value="lbf">lbf (paunavoima)</option></select></div>
+      </div>
+    </section>
+<section class="field-group">
+      <h3>Mittausolosuhteet ja lähde</h3>
+      <div class="field-list">
+<div class="field-row"><label for="density">Ilman tiheys (kg/m³)</label><input id="density" type="number" min="0.1" max="2" step="any" value="1.225" required><small id="densityHelp">Oletusarvo; merkitään oletusarvoksi.</small></div>
+      <div class="field-row"><label for="ct0Estimate">CT₀-oletus työntövoiman arviointiin</label><input id="ct0Estimate" type="number" min="0.001" max="1" step="0.001" value="0.075" required><small>Alustava yleisoletus, ei mitattu eikä potkurikohtaisesti validoitu kerroin. Säädä vain, jos käytössä on perusteltu arvio.</small></div>
+      <div class="field-row"><label for="date">Mittauspäivä</label><input id="date" type="date" required></div>
+      <div class="field-row"><label for="ambientTemp">Lämpötila mittauspaikalla (°C)</label><input id="ambientTemp" type="number" min="-80" max="60" step="any" placeholder="Jos tiedossa"></div>
+      <div class="field-row"><label for="pressure">Ilmanpaine (hPa)</label><input id="pressure" type="number" min="300" max="1100" step="any" placeholder="Jos tiedossa"></div>
+      <div class="field-row"><label for="sourceUrl">Lähteen URL (vaaditaan muiden kuin omien mittausten yhteydessä)</label><input id="sourceUrl" type="url" placeholder="https://..."></div>
+      <div class="field-row"><label for="notes">Lisätiedot</label><input id="notes" maxlength="500" placeholder="Esim. testipenkki ja olosuhteet"></div>
+      </div>
+    </section>
     </div>
     <div class="weather-panel full">
       <h3>Historiallisten sääolosuhteiden haku</h3>
       <p class="table-note">Hae päivämäärän ja paikan perusteella mallinnetut tuntisäätiedot. Halutessasi anna muistamasi lämpötila, jotta löydät sitä lähinnä olevat tunnit. Historiallisessa sääarkistossa on viivettä, joten aivan uusimmat päivät eivät välttämättä ole saatavilla.</p>
       <div class="grid">
-        <div class="field"><label for="weatherLocation">Paikka (esim. Alajärvi, Suomi)</label><input id="weatherLocation" placeholder="Paikkakunta tai paikan nimi"></div>
-        <div class="field"><label for="rememberedTemp">Muistettu lämpötila (°C, valinnainen)</label><input id="rememberedTemp" type="number" step="any" placeholder="Esim. 18"></div>
-        <div class="field"><button id="fetchWeather" class="secondary-button" type="button">Hae historialliset sääolosuhteet</button></div>
-        <div class="field full"><label for="weatherHour">Valitse sopivin tunti</label><select id="weatherHour" disabled><option value="">Hae ensin säätiedot</option></select><small>Valinta täyttää lämpötilan, ilmanpaineen ja lasketun ilman tiheyden. Tiedot ovat säämallin arvioita, eivät välttämättä mittauspisteen havaintoja.</small></div>
+        <div class="field-row"><label for="weatherLocation">Paikka (esim. Alajärvi, Suomi)</label><input id="weatherLocation" placeholder="Paikkakunta tai paikan nimi"></div>
+        <div class="field-row"><label for="rememberedTemp">Muistettu lämpötila (°C, valinnainen)</label><input id="rememberedTemp" type="number" step="any" placeholder="Esim. 18"></div>
+        <div class="field-row weather-action"><span></span><button id="fetchWeather" class="secondary-button" type="button">Hae historialliset sääolosuhteet</button></div>
+        <div class="field-row"><label for="weatherHour">Valitse sopivin tunti</label><select id="weatherHour" disabled><option value="">Hae ensin säätiedot</option></select><small>Valinta täyttää lämpötilan, ilmanpaineen ja lasketun ilman tiheyden. Tiedot ovat säämallin arvioita, eivät välttämättä mittauspisteen havaintoja.</small></div>
       </div>
       <p id="weatherStatus" class="table-note" role="status" aria-live="polite"></p>
     </div>
