@@ -66,7 +66,8 @@
       </div>
     </section>
     </div>
-    <div class="weather-panel full">
+    <div class="bottom-panels">
+    <div class="weather-panel">
       <h3>Historiallisten sääolosuhteiden haku</h3>
       <p class="table-note">Hae päivämäärän ja paikan perusteella mallinnetut tuntisäätiedot. Halutessasi anna muistamasi lämpötila, jotta löydät sitä lähinnä olevat tunnit. Historiallisessa sääarkistossa on viivettä, joten aivan uusimmat päivät eivät välttämättä ole saatavilla.</p>
       <div class="grid">
@@ -77,7 +78,11 @@
       </div>
       <p id="weatherStatus" class="table-note" role="status" aria-live="polite"></p>
     </div>
-    <button id="saveButton" type="submit">Tallenna testimittaus</button>
+    <div class="save-panel">
+      <p>Kun mittaustiedot ovat valmiit, tallenna testimittaus.</p>
+      <button id="saveButton" type="submit">Tallenna testimittaus</button>
+    </div>
+    </div>
   </form>
   <div id="status" role="status" aria-live="polite"></div>
 
