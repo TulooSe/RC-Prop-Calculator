@@ -72,6 +72,7 @@
       <div class="field"><label for="thrust">Työntövoima</label><input id="thrust" type="number" min="0" step="any" placeholder="Jätä tyhjäksi, jos ei mitattu"></div>
       <div class="field"><label for="thrustUnit">Työntövoiman yksikkö</label><select id="thrustUnit"><option value="kgf">kgf (kilogrammavoima)</option><option value="N">N (newton)</option><option value="lbf">lbf (paunavoima)</option></select></div>
       <div class="field"><label for="density">Ilman tiheys (kg/m³)</label><input id="density" type="number" min="0.1" max="2" step="any" value="1.225" required><small id="densityHelp">Oletusarvo; merkitään oletusarvoksi.</small></div>
+      <div class="field"><label for="ct0Estimate">CT₀-oletus työntövoiman arviointiin</label><input id="ct0Estimate" type="number" min="0.001" max="1" step="0.001" value="0.075" required><small>Alustava yleisoletus, ei mitattu eikä potkurikohtaisesti validoitu kerroin. Säädä vain, jos käytössä on perusteltu arvio.</small></div>
       <div class="field"><label for="date">Mittauspäivä</label><input id="date" type="date" required></div>
       <div class="field"><label for="ambientTemp">Lämpötila mittauspaikalla (°C)</label><input id="ambientTemp" type="number" min="-80" max="60" step="any" placeholder="Jos tiedossa"></div>
       <div class="field"><label for="pressure">Ilmanpaine (hPa)</label><input id="pressure" type="number" min="300" max="1100" step="any" placeholder="Jos tiedossa"></div>
@@ -104,15 +105,15 @@
     <p id="testsStatus" class="table-note" role="status" aria-live="polite">Testejä ei ole vielä ladattu.</p>
     <div class="table-wrap">
       <table aria-label="Tallennetut testimittaukset">
-        <thead><tr><th>Päivä</th><th>Moottori</th><th>Potkuri</th><th>Kierrosluku (r/min)</th><th>Työntövoima (N)</th><th>CT₀</th><th>Kärjen nopeus (m/s)</th><th>Kärjen Mach</th><th>Teoreettinen nousunopeus (m/s)</th><th>Datan tila</th><th>Laatutarkistus</th><th>Testitunnus</th></tr></thead>
-        <tbody id="testsBody"><tr><td colspan="9">Testejä ei ole vielä ladattu.</td></tr></tbody>
+        <thead><tr><th>Päivä</th><th>Moottori</th><th>Potkuri</th><th>Kierrosluku (r/min)</th><th>Mitattu työntövoima (N)</th><th>Arvioitu työntövoima (N)</th><th>Mitattu CT₀</th><th>CT₀-oletus</th><th>Datan tila</th><th>Laatutarkistus</th><th>Testitunnus</th></tr></thead>
+        <tbody id="testsBody"><tr><td colspan="11">Testejä ei ole vielä ladattu.</td></tr></tbody>
       </table>
     </div>
-    <p class="table-note">Taulukkoa voi vierittää vaakasuunnassa. Kärjen Mach-luvun * tarkoittaa, että äänen nopeus on arvioitu oletuslämpötilalla 20 °C. Teoreettinen nousunopeus perustuu potkurin geometriseen nousuun ja kierroslukuun; se ei ole lennokin todellinen lentonopeus.</p>
+    <p class="table-note">Taulukkoa voi vierittää vaakasuunnassa, jos kaikki sarakkeet eivät mahdu näytölle.</p>
   </section>
 </main>
 <script>
-  const API_URL = "https://script.google.com/macros/s/AKfycbz7wtn2mHu82GAOkmp9P0vunFGnq3UfGnxnV4zFLcj9fwtKIO7P8nJmCpUV_eG2BKM/exec";
+  const API_URL = "https://script.google.com/macros/s/AKfycbyr3r6Fs-MDY5HEAPsCWO8TqgtYw_s5DHeJaPGh6O1PdCM_rAmBg2UNaaz51HUrt80/exec";
   const form = document.getElementById("testForm");
   const button = document.getElementById("saveButton");
   const statusBox = document.getElementById("status");
@@ -279,35 +280,10 @@
       MISSING_PRESSURE: "Ilmanpaine puuttuu",
       MISSING_INSTRUMENT_INFO: "Mittalaitetiedot puuttuvat",
       MISSING_ENGINE_DETAILS: "Moottorin tiedot ovat puutteelliset",
-      MISSING_SOURCE: "Lähdetieto puuttuu"
+      MISSING_SOURCE: "Lähdetieto puuttuu",
+      ASSUMED_CT0: "Työntövoima arvioitu yleisellä CT₀-oletuksella"
     };
     return labels[flag] || flag;
-  }
-
-  function derivedPropValues(test) {
-    const diameterIn = Number(test.PropDiameter_in);
-    const pitchIn = Number(test.PropPitch_in);
-    const rpm = Number(test.RPM_measured);
-    const tempValue = test.AmbientTemp_C;
-    const tempC = tempValue !== "" && tempValue != null && Number.isFinite(Number(tempValue))
-      ? Number(tempValue) : 20;
-    if (!(diameterIn > 0) || !(rpm > 0)) {
-      return { tipSpeed: null, tipMach: null, pitchSpeed: null, machAssumedTemp: tempValue === "" || tempValue == null };
-    }
-    const diameterM = diameterIn * 0.0254;
-    const tipSpeed = Math.PI * diameterM * rpm / 60;
-    const soundSpeed = Math.sqrt(1.4 * 287.05 * (tempC + 273.15));
-    const pitchSpeed = pitchIn > 0 ? pitchIn * 0.0254 * rpm / 60 : null;
-    return {
-      tipSpeed,
-      tipMach: tipSpeed / soundSpeed,
-      pitchSpeed,
-      machAssumedTemp: tempValue === "" || tempValue == null
-    };
-  }
-
-  function displayDerived(value, digits = 1) {
-    return value == null || !Number.isFinite(value) ? "—" : value.toFixed(digits);
   }
 
   function renderTests() {
@@ -322,7 +298,7 @@
     if (!filtered.length) {
       const row = document.createElement("tr");
       const cell = document.createElement("td");
-      cell.colSpan = 12;
+      cell.colSpan = 9;
       cell.textContent = savedTests.length ? "Suodattimilla ei löytynyt testejä." : "Tallennettuja testejä ei löytynyt.";
       row.appendChild(cell);
       testsBody.appendChild(row);
@@ -337,14 +313,9 @@
         addCell(row, prop + (test.BladeCount ? " · " + test.BladeCount + " lapaa" : ""));
         addCell(row, test.RPM_measured);
         addCell(row, test.Thrust_measured_N);
+        addCell(row, test.Thrust_calculated_N);
         addCell(row, test.CT0_calculated);
-        const derived = derivedPropValues(test);
-        addCell(row, displayDerived(derived.tipSpeed));
-        const machCell = document.createElement("td");
-        machCell.textContent = derived.tipMach == null ? "—" : displayDerived(derived.tipMach, 2) + (derived.machAssumedTemp ? " *" : "");
-        if (derived.machAssumedTemp && derived.tipMach != null) machCell.title = "Laskettu oletuslämpötilalla 20 °C, koska mittauslämpötila puuttuu.";
-        row.appendChild(machCell);
-        addCell(row, displayDerived(derived.pitchSpeed));
+        addCell(row, test.CT0_estimated);
         addCell(row, test.DataStatus);
         const qualityCell = document.createElement("td");
         const flagCount = Number(test.QualityFlagCount || 0);
@@ -510,6 +481,8 @@
     if (sourceType !== "OwnTest" && !sourceUrl) return showStatus("Anna lähteen URL, kun kyseessä ei ole oma mittaus.", "error");
     if (thrustText !== "" && (!Number.isFinite(Number(thrustText)) || Number(thrustText) <= 0)) return showStatus("Työntövoiman pitää olla positiivinen luku tai kentän pitää olla tyhjä.", "error");
     if (!densityText || !Number.isFinite(Number(densityText)) || Number(densityText) <= 0) return showStatus("Tarkista ilman tiheys.", "error");
+    const ct0Text = document.getElementById("ct0Estimate").value.trim();
+    if (!ct0Text || !Number.isFinite(Number(ct0Text)) || Number(ct0Text) <= 0 || Number(ct0Text) > 1) return showStatus("CT₀-oletuksen pitää olla suurempi kuin 0 ja enintään 1.", "error");
     if (!selectedEngineId && (!engineFields.EngineMake.value.trim() || !engineFields.EngineModel.value.trim())) return showStatus("Anna uuden moottorin valmistaja ja malli tai valitse moottori rekisteristä.", "error");
 
     const test = {
@@ -531,6 +504,8 @@
       ThrustInput_Unit: thrustText === "" ? "" : document.getElementById("thrustUnit").value,
       AirDensity_kg_m3: Number(densityText),
       AirDensitySource: densitySource,
+      CT0_estimated: Number(document.getElementById("ct0Estimate").value),
+      CT0_estimation_method: "GENERIC_ASSUMPTION",
       AmbientTemp_C: ambientTempInput.value.trim() === "" ? "" : Number(ambientTempInput.value),
       Pressure_hPa: pressureInput.value.trim() === "" ? "" : Number(pressureInput.value),
       Notes: [document.getElementById("notes").value.trim(), weatherProvenance].filter(Boolean).join(" | "),
@@ -581,11 +556,10 @@
         "Testitunnus: " + (saved.TestID || "ei palautettu") + "\n" +
         "Moottoritunnus: " + (saved.EngineID || test.EngineID || "ei palautettu") + "\n" +
         "Tila: " + (saved.DataStatus || "ei ilmoitettu") + "\n" +
-        "Työntövoima (N): " + (saved.Thrust_measured_N ?? "ei mitattu") + "\n" +
-        "CT0: " + (saved.CT0_calculated ?? "ei laskettu") + "\n" +
-        "Potkurin kärjen nopeus (m/s): " + (Number.isFinite(Number(test.PropDiameter_in)) && Number(test.PropDiameter_in) > 0 && Number(test.RPM_measured) > 0 ? (Math.PI * Number(test.PropDiameter_in) * 0.0254 * Number(test.RPM_measured) / 60).toFixed(1) : "ei laskettu") + "\n" +
-        "Kärjen Mach: " + (Number.isFinite(Number(test.PropDiameter_in)) && Number(test.PropDiameter_in) > 0 && Number(test.RPM_measured) > 0 ? ((Math.PI * Number(test.PropDiameter_in) * 0.0254 * Number(test.RPM_measured) / 60) / Math.sqrt(1.4 * 287.05 * (((test.AmbientTemp_C !== "" && test.AmbientTemp_C != null && Number.isFinite(Number(test.AmbientTemp_C))) ? Number(test.AmbientTemp_C) : 20) + 273.15))).toFixed(2) + ((test.AmbientTemp_C === "" || test.AmbientTemp_C == null) ? " * (oletus 20 °C)" : "") : "ei laskettu") + "\n" +
-        "Teoreettinen nousunopeus (m/s): " + (Number(test.PropPitch_in) > 0 && Number(test.RPM_measured) > 0 ? (Number(test.PropPitch_in) * 0.0254 * Number(test.RPM_measured) / 60).toFixed(1) : "ei laskettu"), "success");
+        "Mitattu työntövoima (N): " + (saved.Thrust_measured_N ?? "ei mitattu") + "\n" +
+        "Arvioitu työntövoima (N): " + (saved.Thrust_calculated_N ?? "ei laskettu") + "\n" +
+        "CT₀-oletus: " + (saved.CT0_estimated ?? "ei laskettu") + "\n" +
+        "Mitatuista tiedoista laskettu CT₀: " + (saved.CT0_calculated ?? "ei laskettu"), "success");
       if (!selectedEngineId && test.EngineMake && test.EngineModel) await loadEngines();
       await loadTests();
     } catch (error) {
