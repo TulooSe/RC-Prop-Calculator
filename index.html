@@ -4,40 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>RC Prop Calculator</title>
-  <style>
-    * { box-sizing: border-box; }
-    body { margin: 0; padding: 24px 14px; background: #f3f5f7; color: #202833; font: 16px/1.5 Arial, sans-serif; }
-    main { max-width: 760px; margin: auto; padding: 24px; background: white; border-radius: 12px; box-shadow: 0 2px 12px #00000010; }
-    h1 { margin-top: 0; font-size: 27px; }
-    h2 { margin-top: 28px; font-size: 19px; }
-    .intro, small { color: #586575; }
-    .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
-    label { display: block; margin-bottom: 4px; font-weight: 600; font-size: 14px; }
-    input, select, button { width: 100%; min-height: 42px; padding: 9px; border: 1px solid #c8d0d9; border-radius: 6px; font: inherit; }
-    input:disabled, select:disabled { background: #f0f2f4; color: #586575; }
-    .field { min-width: 0; }
-    .full { grid-column: 1 / -1; }
-    button { margin-top: 18px; background: #185abd; color: white; border: 0; font-weight: 700; cursor: pointer; }
-    button:disabled { opacity: 0.6; cursor: wait; }
-    #status { margin-top: 18px; padding: 12px; border-radius: 6px; overflow-wrap: anywhere; white-space: pre-wrap; }
-    #status:empty { display: none; }
-    .success { background: #e6f5e9; color: #185b2a; }
-    .error { background: #fff0ef; color: #942b22; }
-    .info { background: #eaf2ff; color: #174785; }
-    .filters { display: grid; grid-template-columns: 2fr 1fr; gap: 10px; margin: 12px 0; }
-    .table-wrap { overflow-x: auto; border: 1px solid #d9dfe6; border-radius: 8px; }
-    table { border-collapse: collapse; width: 100%; min-width: 780px; font-size: 13px; }
-    th, td { padding: 9px 10px; border-bottom: 1px solid #e4e8ed; text-align: left; white-space: nowrap; }
-    th { background: #f3f5f7; position: sticky; top: 0; }
-    tbody tr:last-child td { border-bottom: 0; }
-    .table-note { color: #586575; font-size: 13px; }
-    .quality-good { color: #176533; font-weight: 700; }
-    .quality-check { color: #8a4b00; font-weight: 700; }
-    .weather-panel { margin-top: 18px; padding: 14px; border: 1px solid #d9dfe6; border-radius: 8px; background: #fafbfd; }
-    .weather-panel h3 { margin: 0 0 8px; font-size: 16px; }
-    .secondary-button { margin-top: 0; background: #e9eef5; color: #24364a; border: 1px solid #c8d0d9; }
-    @media (max-width: 480px) { .grid { grid-template-columns: 1fr; } .full { grid-column: auto; } main { padding: 18px; } }
-  </style>
+  <link rel="stylesheet" href="style.css">
+  
 </head>
 <body>
 <main>
@@ -113,7 +81,7 @@
   </section>
 </main>
 <script>
-  const API_URL = "https://script.google.com/macros/s/AKfycbyr3r6Fs-MDY5HEAPsCWO8TqgtYw_s5DHeJaPGh6O1PdCM_rAmBg2UNaaz51HUrt80/exec";
+  const API_URL = "https://script.google.com/macros/s/AKfycbz7wtn2mHu82GAOkmp9P0vunFGnq3UfGnxnV4zFLcj9fwtKIO7P8nJmCpUV_eG2BKM/exec";
   const form = document.getElementById("testForm");
   const button = document.getElementById("saveButton");
   const statusBox = document.getElementById("status");
