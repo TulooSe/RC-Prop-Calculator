@@ -197,7 +197,17 @@ button:disabled { opacity: .6; cursor: wait; }
 }
 .save-panel #saveButton { width: auto; min-width: 220px; margin: 0; }
 .weather-panel p { margin: 4px 0 7px; }
-.weather-panel .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px 10px; }\n.weather-panel .grid > .field-row:first-child { grid-column: 1 / -1; }\n.weather-panel .grid > .field-row:nth-child(3), .weather-panel .grid > .field-row:nth-child(4) { grid-column: 1 / -1; }
+.weather-panel .grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px 10px;
+}
+.weather-panel .grid > .field-row:nth-child(1),
+.weather-panel .grid > .field-row:nth-child(2),
+.weather-panel .grid > .field-row:nth-child(3),
+.weather-panel .grid > .field-row:nth-child(4) {
+  grid-column: 1 / -1;
+}
 .weather-panel .field-row { grid-template-columns: minmax(100px, 35%) minmax(0, 1fr); }
 .weather-panel .field-row:has(button) { grid-template-columns: minmax(0, 1fr); }
 .weather-panel .field-row:has(button) span { display: none; }
