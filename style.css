@@ -94,12 +94,27 @@ input:focus, select:focus, button:focus-visible {
   border-color: var(--accent);
 }
 input:disabled, select:disabled { background: #f0f2f4; color: var(--muted); }
-.field-row small { grid-column: 2; margin-top: -3px; color: var(--muted); font-size: 10px; line-height: 1.2; }
-.field-row:has(small) { align-items: start; }
-.field-row:has(small) label { padding-top: 5px; }
-.field-row:has(small) input,
-.field-row:has(small) select { grid-column: 2; }
-.field-row:has(small) small { grid-column: 2; }
+.field-row { position: relative; }
+.field-row small {
+  display: none;
+  position: absolute;
+  z-index: 20;
+  left: 40%;
+  top: calc(100% + 3px);
+  width: min(320px, 58vw);
+  margin: 0;
+  padding: 7px 9px;
+  border: 1px solid #b8c5d6;
+  border-radius: 5px;
+  background: #fffef8;
+  color: #273548;
+  box-shadow: 0 3px 10px rgba(0,0,0,.15);
+  font-size: 11px;
+  line-height: 1.35;
+}
+.field-row:hover small, .field-row:focus-within small { display: block; }
+.weather-intro { cursor: help; }
+.weather-intro:hover { text-decoration: underline dotted; }
 
 button {
   min-height: 29px;
@@ -140,8 +155,10 @@ button:disabled { opacity: .6; cursor: wait; }
   display: flex;
   justify-content: flex-end;
   margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #e1e6ed;
 }
-.save-panel #saveButton { width: auto; min-width: 190px; margin: 0; }
+.save-panel #saveButton { width: 100%; min-width: 0; margin: 0; }
 .weather-panel p { margin: 4px 0 7px; }
 .weather-panel .grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px 10px; }
 .weather-panel .field-row { grid-template-columns: minmax(100px, 35%) minmax(0, 1fr); }
