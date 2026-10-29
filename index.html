@@ -69,7 +69,7 @@
     </section>
     <div class="weather-panel">
       <h3>Historiallisten sääolosuhteiden haku</h3>
-      <p class="table-note">Hae päivämäärän ja paikan perusteella mallinnetut tuntisäätiedot. Halutessasi anna muistamasi lämpötila, jotta löydät sitä lähinnä olevat tunnit. Historiallisessa sääarkistossa on viivettä, joten aivan uusimmat päivät eivät välttämättä ole saatavilla.</p>
+      <p class="table-note weather-intro" title="Hae päivämäärän ja paikan perusteella mallinnetut tuntisäätiedot. Voit antaa muistamasi lämpötilan löytääksesi sitä lähinnä olevat tunnit. Historiallisessa sääarkistossa on viivettä, joten aivan uusimmat päivät eivät välttämättä ole saatavilla.">Vie osoitin tämän ohjetekstin päälle saadaksesi lisätietoja.</p>
       <div class="grid">
         <div class="field-row"><label for="weatherLocation">Paikka (esim. Alajärvi, Suomi)</label><input id="weatherLocation" placeholder="Paikkakunta tai paikan nimi"></div>
         <div class="field-row"><label for="rememberedTemp">Muistettu lämpötila (°C, valinnainen)</label><input id="rememberedTemp" type="number" step="any" placeholder="Esim. 18"></div>
@@ -77,10 +77,10 @@
         <div class="field-row"><label for="weatherHour">Valitse sopivin tunti</label><select id="weatherHour" disabled><option value="">Hae ensin säätiedot</option></select><small>Valinta täyttää lämpötilan, ilmanpaineen ja lasketun ilman tiheyden. Tiedot ovat säämallin arvioita, eivät välttämättä mittauspisteen havaintoja.</small></div>
       </div>
       <p id="weatherStatus" class="table-note" role="status" aria-live="polite"></p>
+      <div class="save-panel">
+        <button id="saveButton" type="submit">Tallenna testimittaus</button>
+      </div>
     </div>
-    </div>
-    <div class="save-panel">
-      <button id="saveButton" type="submit">Tallenna testimittaus</button>
     </div>
   </form>
   <div id="status" role="status" aria-live="polite"></div>
