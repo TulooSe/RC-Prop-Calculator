@@ -11,6 +11,11 @@
 <main>
   <h1>RC Prop Calculator</h1>
   <p class="intro">Polttomoottorikäyttöisten RC-lennokkien potkuritestien tallennus.</p>
+  <nav class="tabs" role="tablist" aria-label="Sovelluksen näkymät">
+    <button type="button" class="tab-button active" id="currentTab" role="tab" aria-selected="true" aria-controls="currentTestPanel" data-target="currentTestPanel">Uusi testimittaus</button>
+    <button type="button" class="tab-button" id="savedTab" role="tab" aria-selected="false" aria-controls="savedTestsSection" data-target="savedTestsSection">Tallennetut testimittaukset</button>
+  </nav>
+  <div id="currentTestPanel" class="tab-panel">
   <h2>Testitiedot</h2>
   <form id="testForm">
     <div class="form-groups">
@@ -81,11 +86,16 @@
         <button id="saveButton" type="submit">Tallenna testimittaus</button>
       </div>
     </div>
+    <section class="result-panel" aria-labelledby="resultHeading">
+      <h3 id="resultHeading">Testin tulos</h3>
+      <p class="result-intro">Tallennuksen tila ja testin laskentatulokset näkyvät tässä.</p>
+      <div id="status" role="status" aria-live="polite"></div>
+    </section>
     </div>
   </form>
-  <div id="status" role="status" aria-live="polite"></div>
+  </div>
 
-  <section id="savedTestsSection" aria-labelledby="savedTestsHeading">
+  <section id="savedTestsSection" class="tab-panel" aria-labelledby="savedTestsHeading" hidden>
     <h2 id="savedTestsHeading">Tallennetut testimittaukset</h2>
     <p class="intro">Selaa aiemmin tallennettuja mittauksia. Lista on vain luku -tilassa.</p>
     <div class="filters">
@@ -108,6 +118,18 @@
   const form = document.getElementById("testForm");
   const button = document.getElementById("saveButton");
   const statusBox = document.getElementById("status");
+  document.querySelectorAll(".tab-button").forEach(tab => {
+    tab.addEventListener("click", () => {
+      document.querySelectorAll(".tab-button").forEach(item => {
+        const active = item === tab;
+        item.classList.toggle("active", active);
+        item.setAttribute("aria-selected", String(active));
+      });
+      document.querySelectorAll(".tab-panel").forEach(panel => {
+        panel.hidden = panel.id !== tab.dataset.target;
+      });
+    });
+  });
   const engineSelect = document.getElementById("engineSelect");
   const engineFields = {
     EngineMake: document.getElementById("engineMake"),
