@@ -205,6 +205,14 @@
   const testSearch = document.getElementById("testSearch");
   const statusFilter = document.getElementById("statusFilter");
 
+  function formatTestDateTime(value) {
+    if (value == null || value === "") return "";
+    const raw = String(value).trim();
+    const match = raw.match(/^(\d{4})-(\d{2})-(\d{2})(.*)$/);
+    if (!match) return raw;
+    return match[3] + match[2] + match[1] + match[4];
+  }
+
   function formatThrust(value) {
     if (value == null || String(value).trim() === "") return "—";
     const numericValue = Number(String(value).trim().replace(",", "."));
@@ -347,7 +355,7 @@
           test.ContributorAlias || "Käyttäjä",
           test.EngineModel || test.EngineMake || "",
           test.PropDiameter_in && test.PropPitch_in ? `${test.PropDiameter_in}×${test.PropPitch_in}` : "",
-          test.TestDate || ""
+          formatTestDateTime(test.TestDate)
         ].filter(Boolean).join(" · ");
         addCell(row, readableTestId || "—");
         testsBody.appendChild(row);
