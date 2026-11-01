@@ -170,8 +170,8 @@
       if (!appInitialized) {
         appInitialized = true;
         loadEngines();
-      
-      
+        loadPropellers();
+        loadTests();
       }
     } catch (error) {
       googleIdToken = "";
@@ -397,8 +397,7 @@
       );
     }
   }
-  loadPropellers();
-  
+
   function qualityFlagLabel(flag) {
     const labels = {
       MISSING_THRUST: "Työntövoimaa ei ole ilmoitettu",
@@ -504,7 +503,6 @@
   testSearch.addEventListener("input", renderTests);
   statusFilter.addEventListener("change", renderTests);
   document.getElementById("refreshTests").addEventListener("click", loadTests);
-  loadTests();
 
   let densitySource = "STANDARD_ASSUMED";
   let weatherProvenance = "";
