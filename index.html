@@ -205,6 +205,12 @@
   const testSearch = document.getElementById("testSearch");
   const statusFilter = document.getElementById("statusFilter");
 
+  function formatDateOnly(value) {
+    if (value == null || value === "") return "";
+    const match = String(value).trim().match(/^(\d{4})-(\d{2})-(\d{2})/);
+    return match ? match[3] + match[2] + match[1] : String(value);
+  }
+
   function formatTestDateTime(value) {
     if (value == null || value === "") return "";
     const raw = String(value).trim();
@@ -336,7 +342,7 @@
         const engine = [test.EngineMake, test.EngineModel].filter(Boolean).join(" ");
         const propSize = [test.PropDiameter_in, test.PropPitch_in].filter(v => v !== "" && v != null).join(" × ");
         const prop = (test.PropMake || test.PropModel) ? [test.PropMake, test.PropModel, propSize].filter(Boolean).join(" ") : (propSize ? propSize + " in" : "—");
-        addCell(row, test.TestDate);
+        addCell(row, formatDateOnly(test.TestDate));
         addCell(row, engine || test.EngineID);
         addCell(row, prop + (test.BladeCount ? " · " + test.BladeCount + " lapaa" : ""));
         addCell(row, test.RPM_measured);
