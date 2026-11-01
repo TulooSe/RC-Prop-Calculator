@@ -206,8 +206,10 @@
   const statusFilter = document.getElementById("statusFilter");
 
   function formatThrust(value) {
-    if (value == null || value === "" || !Number.isFinite(Number(value))) return "—";
-    return Number(value).toFixed(2);
+    if (value == null || String(value).trim() === "") return "—";
+    const numericValue = Number(String(value).trim().replace(",", "."));
+    if (!Number.isFinite(numericValue)) return "—";
+    return numericValue.toFixed(2);
   }
 
   function addCell(row, value) {
