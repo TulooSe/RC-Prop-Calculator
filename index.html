@@ -369,7 +369,11 @@
           test.PropDiameter_in && test.PropPitch_in ? `${test.PropDiameter_in}×${test.PropPitch_in}` : "",
           formatTestDateTime(test.TestDate)
         ].filter(Boolean).join(" · ");
-        addCell(row, readableTestId || "—");
+        const testIdCell = document.createElement("td");
+        testIdCell.textContent = readableTestId || "—";
+        testIdCell.title = readableTestId || "Testitunnus puuttuu";
+        testIdCell.className = "test-id-cell";
+        row.appendChild(testIdCell);
         testsBody.appendChild(row);
       });
     }
