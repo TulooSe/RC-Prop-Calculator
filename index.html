@@ -338,12 +338,10 @@
         row.appendChild(qualityCell);
         const readableTestId = [
           test.ContributorAlias || "Käyttäjä",
-          [test.EngineMake, test.EngineModel].filter(Boolean).join(" "),
-          [test.PropMake, test.PropModel].filter(Boolean).join(" "),
-          test.PropDiameter_in && test.PropPitch_in ? `${test.PropDiameter_in}×${test.PropPitch_in}` : "",
-          test.TestDate || ""
+          test.EngineModel || test.EngineMake || "",
+          test.PropDiameter_in && test.PropPitch_in ? `${test.PropDiameter_in}×${test.PropPitch_in}` : ""
         ].filter(Boolean).join(" · ");
-        addCell(row, readableTestId || test.TestID);
+        addCell(row, readableTestId || "—");
         testsBody.appendChild(row);
       });
     }
