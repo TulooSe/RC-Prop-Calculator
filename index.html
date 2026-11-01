@@ -106,7 +106,7 @@
     <p id="testsStatus" class="table-note" role="status" aria-live="polite">Testejä ei ole vielä ladattu.</p>
     <div class="table-wrap">
       <table aria-label="Tallennetut testimittaukset">
-        <thead><tr><th>Päivä</th><th>Moottori</th><th>Potkuri</th><th>Kierrosluku (r/min)</th><th>Mitattu työntövoima (N)</th><th>Arvioitu työntövoima (N)</th><th>Mitattu CT₀</th><th>CT₀-oletus</th><th>Datan tila</th><th>Laatutarkistus</th><th>Testitunnus</th></tr></thead>
+        <thead><tr><th>Päivä</th><th>Moottori</th><th>Potkuri</th><th>Kierrosluku<br>(r/min)</th><th>Mitattu työntövoima<br>(N)</th><th>Arvioitu työntövoima<br>(N)</th><th>Mitattu CT₀</th><th>CT₀-oletus</th><th>Datan tila</th><th>Laatutarkistus</th><th>Testitunnus</th></tr></thead>
         <tbody id="testsBody"><tr><td colspan="11">Testejä ei ole vielä ladattu.</td></tr></tbody>
       </table>
     </div>
@@ -204,6 +204,11 @@
   const testsStatus = document.getElementById("testsStatus");
   const testSearch = document.getElementById("testSearch");
   const statusFilter = document.getElementById("statusFilter");
+
+  function formatThrust(value) {
+    if (value == null || value === "" || !Number.isFinite(Number(value))) return "—";
+    return Number(value).toFixed(2);
+  }
 
   function addCell(row, value) {
     const cell = document.createElement("td");
@@ -325,8 +330,8 @@
         addCell(row, engine || test.EngineID);
         addCell(row, prop + (test.BladeCount ? " · " + test.BladeCount + " lapaa" : ""));
         addCell(row, test.RPM_measured);
-        addCell(row, test.Thrust_measured_N);
-        addCell(row, test.Thrust_calculated_N);
+        addCell(row, formatThrust(test.Thrust_measured_N));
+        addCell(row, formatThrust(test.Thrust_calculated_N));
         addCell(row, test.CT0_calculated);
         addCell(row, test.CT0_estimated);
         addCell(row, test.DataStatus);
@@ -339,7 +344,8 @@
         const readableTestId = [
           test.ContributorAlias || "Käyttäjä",
           test.EngineModel || test.EngineMake || "",
-          test.PropDiameter_in && test.PropPitch_in ? `${test.PropDiameter_in}×${test.PropPitch_in}` : ""
+          test.PropDiameter_in && test.PropPitch_in ? `${test.PropDiameter_in}×${test.PropPitch_in}` : "",
+          test.TestDate || ""
         ].filter(Boolean).join(" · ");
         addCell(row, readableTestId || "—");
         testsBody.appendChild(row);
