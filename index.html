@@ -336,7 +336,14 @@
         qualityCell.className = flagCount ? "quality-check" : "quality-good";
         if (Array.isArray(test.QualityFlags) && test.QualityFlags.length) qualityCell.title = test.QualityFlags.map(qualityFlagLabel).join("; ");
         row.appendChild(qualityCell);
-        addCell(row, test.TestID);
+        const readableTestId = [
+          test.ContributorAlias || "Käyttäjä",
+          [test.EngineMake, test.EngineModel].filter(Boolean).join(" "),
+          [test.PropMake, test.PropModel].filter(Boolean).join(" "),
+          test.PropDiameter_in && test.PropPitch_in ? `${test.PropDiameter_in}×${test.PropPitch_in}` : "",
+          test.TestDate || ""
+        ].filter(Boolean).join(" · ");
+        addCell(row, readableTestId || test.TestID);
         testsBody.appendChild(row);
       });
     }
