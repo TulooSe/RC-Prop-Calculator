@@ -5,17 +5,28 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>RC Prop Calculator</title>
   <link rel="stylesheet" href="style.css">
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
   
 </head>
 <body>
 <main>
   <h1>RC Prop Calculator</h1>
   <p class="intro">Polttomoottorikäyttöisten RC-lennokkien potkuritestien tallennus.</p>
-  <nav class="tabs" role="tablist" aria-label="Sovelluksen näkymät">
+  <section id="authPanel" class="auth-panel" aria-labelledby="authHeading">
+    <h2 id="authHeading">Kirjaudu RC Prop Calculatoriin</h2>
+    <p>Kirjaudu Google-tilillä. Sovellukseen pääsevät vain ylläpitäjän hyväksymät käyttäjät.</p>
+    <div id="googleSignInButton"></div>
+    <p id="authStatus" role="status" aria-live="polite">Kirjautuminen vaaditaan.</p>
+  </section>
+  <div id="userBar" class="user-bar" hidden>
+    <span id="userInfo"></span>
+    <button id="logoutButton" type="button" class="secondary-button">Kirjaudu ulos</button>
+  </div>
+  <nav class="tabs" hidden role="tablist" aria-label="Sovelluksen näkymät">
     <button type="button" class="tab-button active" id="currentTab" role="tab" aria-selected="true" aria-controls="currentTestPanel" data-target="currentTestPanel">Uusi testimittaus</button>
     <button type="button" class="tab-button" id="savedTab" role="tab" aria-selected="false" aria-controls="savedTestsSection" data-target="savedTestsSection">Tallennetut testimittaukset</button>
   </nav>
-  <div id="currentTestPanel" class="tab-panel">
+  <div id="currentTestPanel" class="tab-panel" hidden>
   <h2>Testitiedot</h2>
   <form id="testForm">
     <div class="form-groups">
@@ -115,6 +126,83 @@
 </main>
 <script>
   const API_URL = "https://script.google.com/macros/s/AKfycbyr3r6Fs-MDY5HEAPsCWO8TqgtYw_s5DHeJaPGh6O1PdCM_rAmBg2UNaaz51HUrt80/exec";
+  // Korvaa tämä Google Cloud Consolessa luodulla OAuth 2.0 Web Client ID:llä.
+  const GOOGLE_CLIENT_ID = "PASTE_GOOGLE_OAUTH_WEB_CLIENT_ID_HERE";
+  let googleIdToken = "";
+  let currentUser = null;
+  let appInitialized = false;
+
+  const authPanel = document.getElementById("authPanel");
+  const authStatus = document.getElementById("authStatus");
+  const userBar = document.getElementById("userBar");
+  const tabsNav = document.querySelector(".tabs");
+  const currentTestPanel = document.getElementById("currentTestPanel");
+  const savedTestsSection = document.getElementById("savedTestsSection");
+
+  function showAuthScreen(message) {
+    googleIdToken = "";
+    currentUser = null;
+    authPanel.hidden = false;
+    userBar.hidden = true;
+    tabsNav.hidden = true;
+    currentTestPanel.hidden = true;
+    savedTestsSection.hidden = true;
+    if (message) authStatus.textContent = message;
+  }
+
+  async function handleGoogleCredential(response) {
+    if (!response || !response.credential) {
+      showAuthScreen("Google-kirjautuminen epäonnistui. Yritä uudelleen.");
+      return;
+    }
+    googleIdToken = response.credential;
+    authStatus.textContent = "Tarkistetaan käyttäjän käyttöoikeutta…";
+    try {
+      const result = await apiPost({ action: "authCheck" });
+      currentUser = result.user || null;
+      authPanel.hidden = true;
+      tabsNav.hidden = false;
+      currentTestPanel.hidden = false;
+      savedTestsSection.hidden = true;
+      userBar.hidden = false;
+      document.getElementById("userInfo").textContent =
+        (currentUser.alias || currentUser.email) + " · " + currentUser.role;
+      if (!appInitialized) {
+        appInitialized = true;
+        loadEngines();
+      
+      
+      }
+    } catch (error) {
+      googleIdToken = "";
+      authStatus.textContent = error.message || "Käyttäjällä ei ole käyttöoikeutta.";
+    }
+  }
+
+  function initGoogleSignIn() {
+    if (GOOGLE_CLIENT_ID === "PASTE_GOOGLE_OAUTH_WEB_CLIENT_ID_HERE") {
+      authStatus.textContent = "Kirjautumista ei ole vielä määritetty. Lisää Google Cloud Consolessa luotu OAuth Web Client ID tähän index.html-tiedostoon.";
+      return;
+    }
+    if (!window.google || !google.accounts || !google.accounts.id) {
+      authStatus.textContent = "Google-kirjautumispalvelua ei saatu ladattua. Tarkista verkkoyhteys ja selaimen sisältöestot.";
+      return;
+    }
+    google.accounts.id.initialize({
+      client_id: GOOGLE_CLIENT_ID,
+      callback: handleGoogleCredential,
+      auto_select: false
+    });
+    google.accounts.id.renderButton(
+      document.getElementById("googleSignInButton"),
+      { theme: "outline", size: "large", text: "signin_with", shape: "rectangular", width: 260 }
+    );
+  }
+
+  document.getElementById("logoutButton").addEventListener("click", () => {
+    showAuthScreen("Olet kirjautunut ulos. Kirjaudu uudelleen jatkaaksesi.");
+  });
+
   const form = document.getElementById("testForm");
   const button = document.getElementById("saveButton");
   const statusBox = document.getElementById("status");
@@ -150,16 +238,24 @@
   }
 
   async function apiPost(payload) {
+    if (!googleIdToken) throw new Error("Kirjautuminen vaaditaan. Kirjaudu Google-tilillä uudelleen.");
     const response = await fetch(API_URL, {
       method: "POST",
       headers: { "Content-Type": "text/plain;charset=utf-8" },
-      body: JSON.stringify(payload)
+      body: JSON.stringify({ ...payload, idToken: googleIdToken })
     });
     const text = await response.text();
     let result;
     try { result = JSON.parse(text); }
     catch { throw new Error("Palvelin ei palauttanut JSON-vastausta. Tarkista Apps Script -julkaisu."); }
-    if (!response.ok || result.status === "error" || result.error) throw new Error(result.error || "Palvelinpyyntö epäonnistui.");
+    if (!response.ok || result.status === "error" || result.error) {
+      const error = new Error(result.error || "Palvelinpyyntö epäonnistui.");
+      error.code = result.code || "";
+      if (error.code === "AUTH_REQUIRED" && payload.action !== "authCheck") {
+        showAuthScreen("Kirjautumisistunto on vanhentunut. Kirjaudu uudelleen.");
+      }
+      throw error;
+    }
     if (result.status !== "ok") throw new Error("Odottamaton palvelinvastaus.");
     return result;
   }
@@ -198,7 +294,6 @@
     }
   }
   setEngineFields(null, false);
-  loadEngines();
 
   const testsBody = document.getElementById("testsBody");
   const testsStatus = document.getElementById("testsStatus");
@@ -518,6 +613,8 @@
   pressureInput.addEventListener("change", calculateDensityFromManualConditions);
   document.getElementById("date").addEventListener("change", () => { weatherProvenance = ""; weatherHour.disabled = true; });
   document.getElementById("weatherLocation").addEventListener("input", () => { weatherProvenance = ""; });
+
+  window.addEventListener("load", initGoogleSignIn);
 
   form.addEventListener("submit", async event => {
     event.preventDefault();
