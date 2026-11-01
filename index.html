@@ -311,7 +311,7 @@
     if (!filtered.length) {
       const row = document.createElement("tr");
       const cell = document.createElement("td");
-      cell.colSpan = 9;
+      cell.colSpan = 11;
       cell.textContent = savedTests.length ? "Suodattimilla ei löytynyt testejä." : "Tallennettuja testejä ei löytynyt.";
       row.appendChild(cell);
       testsBody.appendChild(row);
@@ -348,7 +348,7 @@
     testsBody.replaceChildren();
     const loadingRow = document.createElement("tr");
     const loadingCell = document.createElement("td");
-    loadingCell.colSpan = 9;
+    loadingCell.colSpan = 11;
     loadingCell.textContent = "Ladataan…";
     loadingRow.appendChild(loadingCell);
     testsBody.appendChild(loadingRow);
@@ -362,7 +362,7 @@
       testsBody.replaceChildren();
       const row = document.createElement("tr");
       const cell = document.createElement("td");
-      cell.colSpan = 9;
+      cell.colSpan = 11;
       cell.textContent = "Testilistan lataus epäonnistui.";
       row.appendChild(cell);
       testsBody.appendChild(row);
