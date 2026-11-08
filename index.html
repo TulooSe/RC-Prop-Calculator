@@ -394,12 +394,18 @@
     const soundSpeed = Math.sqrt(1.4 * 287.05 * (tempC + 273.15));
     const mach = tipSpeed == null ? null : tipSpeed / soundSpeed;
     const pitchSpeed = Number.isFinite(p) && p > 0 && Number.isFinite(rpm) && rpm > 0 ? p * 0.0254 * rpm / 60 : null;
-    const registeredEngine = engines.find(engine =>
-      (test.EngineID && String(engine.EngineID) === String(test.EngineID)) ||
-      (!test.EngineID && test.EngineMake && test.EngineModel &&
-        String(engine.EngineMake).toLowerCase() === String(test.EngineMake).toLowerCase() &&
-        String(engine.EngineModel).toLowerCase() === String(test.EngineModel).toLowerCase())
-    );
+    const registeredEngineById = test.EngineID
+      ? engines.find(engine => String(engine.EngineID).trim() === String(test.EngineID).trim())
+      : null;
+    const normalizedEngineText = value => String(value ?? "").trim().replace(/\\s+/g, " ").toLocaleLowerCase("fi");
+    const registeredEngineByName = test.EngineMake && test.EngineModel
+      ? engines.find(engine =>
+          normalizedEngineText(engine.EngineMake) === normalizedEngineText(test.EngineMake) &&
+          normalizedEngineText(engine.EngineModel) === normalizedEngineText(test.EngineModel))
+      : null;
+    // EngineID voi olla vanhoissa testeissä eri muodossa kuin rekisterissä.
+    // Käytä tällöin aina varahaun tulosta (merkki + malli).
+    const registeredEngine = registeredEngineById || registeredEngineByName;
     const thrustValue = test.Thrust_calculated_N;
     const displacementValue = test.EngineDisplacement_cc != null && String(test.EngineDisplacement_cc).trim() !== ""
       ? test.EngineDisplacement_cc
