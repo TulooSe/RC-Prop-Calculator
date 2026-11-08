@@ -287,3 +287,27 @@ tbody tr:last-child td { border-bottom: 0; }
   font-size: 12px;
 }
 .user-bar button { width: auto; }
+
+
+.registry-filter-block {
+  display: grid;
+  gap: 6px;
+  margin: 2px 0 5px;
+  padding: 7px;
+  border: 1px solid #e0e6ee;
+  border-radius: 5px;
+  background: #f7f9fc;
+}
+.registry-filter-block > strong {
+  color: #34465c;
+  font-size: 11px;
+}
+.registry-filter-block .field-row {
+  grid-template-columns: minmax(90px, 35%) minmax(0, 1fr);
+}
+.filter-count {
+  margin: 0;
+  color: var(--muted);
+  font-size: 10px;
+  text-align: right;
+}
