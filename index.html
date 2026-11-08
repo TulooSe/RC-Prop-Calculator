@@ -349,6 +349,9 @@
       engines = Array.isArray(result.engines) ? result.engines : [];
       populateEngineMakeFilter();
       renderEngineOptions();
+      // Testihistoria voi latautua rinnakkain moottorirekisterin kanssa.
+      // Päivitä se uudelleen, jotta iskutilavuus voidaan hakea EngineID:n perusteella.
+      if (Array.isArray(savedTests) && savedTests.length) renderTests();
       showStatus(engines.length ? `Moottorirekisteri ladattu (${engines.length} moottoria).` : "Moottorirekisterissä ei vielä ole moottoreita. Ensimmäinen uusi moottori lisätään tallennuksen yhteydessä.", "info");
     } catch (error) {
       showStatus("Moottorirekisteriä ei saatu ladattua. Uuden moottorin voi silti syöttää; tarkista tarvittaessa Apps Script -julkaisu.\n" + error.message, "error");
@@ -391,8 +394,19 @@
     const soundSpeed = Math.sqrt(1.4 * 287.05 * (tempC + 273.15));
     const mach = tipSpeed == null ? null : tipSpeed / soundSpeed;
     const pitchSpeed = Number.isFinite(p) && p > 0 && Number.isFinite(rpm) && rpm > 0 ? p * 0.0254 * rpm / 60 : null;
-    const thrust = Number(test.Thrust_calculated_N), cc = Number(test.EngineDisplacement_cc);
-    const thrustPerCc = test.Thrust_calculated_N != null && String(test.Thrust_calculated_N).trim() !== "" &&
+    const registeredEngine = engines.find(engine =>
+      (test.EngineID && String(engine.EngineID) === String(test.EngineID)) ||
+      (!test.EngineID && test.EngineMake && test.EngineModel &&
+        String(engine.EngineMake).toLowerCase() === String(test.EngineMake).toLowerCase() &&
+        String(engine.EngineModel).toLowerCase() === String(test.EngineModel).toLowerCase())
+    );
+    const thrustValue = test.Thrust_calculated_N;
+    const displacementValue = test.EngineDisplacement_cc != null && String(test.EngineDisplacement_cc).trim() !== ""
+      ? test.EngineDisplacement_cc
+      : registeredEngine?.EngineDisplacement_cc;
+    const thrust = Number(thrustValue), cc = Number(displacementValue);
+    const thrustPerCc = thrustValue != null && String(thrustValue).trim() !== "" &&
+      displacementValue != null && String(displacementValue).trim() !== "" &&
       Number.isFinite(thrust) && thrust > 0 && Number.isFinite(cc) && cc > 0 ? thrust / cc : null;
     return {tipSpeed, mach, pitchSpeed, thrustPerCc, tempC, assumedTemp: !hasTemp};
   }
