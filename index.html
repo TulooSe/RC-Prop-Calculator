@@ -823,17 +823,17 @@
       const derived = calculateDerivedMetrics({ ...test, ...saved });
       const tempNote = derived.assumedTemp ? " (20 °C oletus)" : " (" + derived.tempC.toFixed(1) + " °C)";
       showStatus(
-        "Tallennus onnistui!\\n" +
-        "Testitunnus: " + (saved.TestID || "ei palautettu") + "\\n" +
-        "Moottoritunnus: " + (saved.EngineID || test.EngineID || "ei palautettu") + "\\n" +
-        "Tila: " + (saved.DataStatus || "ei ilmoitettu") + "\\n" +
-        "Mitattu työntövoima (N): " + (saved.Thrust_measured_N ?? "ei mitattu") + "\\n" +
-        "Arvioitu työntövoima (N): " + (saved.Thrust_calculated_N ?? "ei laskettu") + "\\n" +
-        "Potkurin kärjen nopeus: " + metricText(derived.tipSpeed == null ? null : derived.tipSpeed * 3.6) + " km/h\\n" +
-        "Kärjen Mach-luku: " + metricText(derived.mach, 3) + tempNote + "\\n" +
-        "Teoreettinen nousunopeus: " + metricText(derived.pitchSpeed == null ? null : derived.pitchSpeed * 3.6) + " km/h\\n" +
-        "Työntövoima / iskutilavuus: " + metricText(derived.thrustPerCc, 3) + " N/cm³\\n" +
-        "CT₀-oletus: " + (saved.CT0_estimated ?? "ei laskettu") + "\\n" +
+        "Tallennus onnistui!\n" +
+        "Testitunnus: " + (saved.TestID || "ei palautettu") + "\n" +
+        "Moottoritunnus: " + (saved.EngineID || test.EngineID || "ei palautettu") + "\n" +
+        "Tila: " + (saved.DataStatus || "ei ilmoitettu") + "\n" +
+        "Mitattu työntövoima (N): " + (saved.Thrust_measured_N ?? "ei mitattu") + "\n" +
+        "Arvioitu työntövoima (N): " + (saved.Thrust_calculated_N ?? "ei laskettu") + "\n" +
+        "Potkurin kärjen nopeus: " + metricText(derived.tipSpeed == null ? null : derived.tipSpeed * 3.6) + " km/h\n" +
+        "Kärjen Mach-luku: " + metricText(derived.mach, 3) + tempNote + "\n" +
+        "Teoreettinen nousunopeus: " + metricText(derived.pitchSpeed == null ? null : derived.pitchSpeed * 3.6) + " km/h\n" +
+        "Työntövoima / iskutilavuus: " + metricText(derived.thrustPerCc, 3) + " N/cm³\n" +
+        "CT₀-oletus: " + (saved.CT0_estimated ?? "ei laskettu") + "\n" +
         "Mitatuista tiedoista laskettu CT₀: " + (saved.CT0_calculated ?? "ei laskettu"), "success");
       if (!selectedEngineId && test.EngineMake && test.EngineModel) await loadEngines();
       await loadTests();
