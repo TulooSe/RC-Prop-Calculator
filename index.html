@@ -122,11 +122,11 @@
     <p id="testsStatus" class="table-note" role="status" aria-live="polite">Testejä ei ole vielä ladattu.</p>
     <div class="table-wrap">
       <table aria-label="Tallennetut testimittaukset">
-        <thead><tr><th>Päivä</th><th>Moottori</th><th>Potkuri</th><th>Kierrosluku<br>(r/min)</th><th>Kärjen nopeus<br>(km/h)</th><th>Kärjen Mach</th><th>Teoreettinen nousunopeus<br>(km/h)</th><th>Työntövoima / cm³<br>(N/cm³)</th><th>Mitattu työntövoima<br>(N)</th><th>Arvioitu työntövoima<br>(N)</th><th>CT₀<br>Mitattu</th><th>CT₀<br>Oletus</th><th>Data tila</th><th>Laatutarkistus</th><th>Testitunnus</th></tr></thead>
+        <thead><tr><th>Päivä</th><th>Moottori</th><th>Potkuri</th><th>Kierrosluku<br>(r/min)</th><th>Kärjen nopeus<br>(km/h)</th><th>Kärjen Mach</th><th>Teoreettinen nousunopeus<br>(km/h)</th><th>Arvioitu työntövoima / iskutilavuus<br>(N/cm³)</th><th>Mitattu työntövoima<br>(N)</th><th>Arvioitu työntövoima<br>(N)</th><th>CT₀<br>Mitattu</th><th>CT₀<br>Oletus</th><th>Data tila</th><th>Laatutarkistus</th><th>Testitunnus</th></tr></thead>
         <tbody id="testsBody"><tr><td colspan="11">Testejä ei ole vielä ladattu.</td></tr></tbody>
       </table>
     </div>
-    <p class="table-note">Taulukkoa voi vierittää vaakasuunnassa, jos kaikki sarakkeet eivät mahdu näytölle.</p>
+    <p class="table-note">Työntövoima/iskutilavuus on laskennallinen arvio. Se perustuu CT₀-oletukseen ja ilman tiheyteen, ei mitattuun työntövoimaan. Taulukkoa voi vierittää vaakasuunnassa, jos kaikki sarakkeet eivät mahdu näytölle.</p>
   </section>
 </main>
 <script>
@@ -391,8 +391,8 @@
     const soundSpeed = Math.sqrt(1.4 * 287.05 * (tempC + 273.15));
     const mach = tipSpeed == null ? null : tipSpeed / soundSpeed;
     const pitchSpeed = Number.isFinite(p) && p > 0 && Number.isFinite(rpm) && rpm > 0 ? p * 0.0254 * rpm / 60 : null;
-    const thrust = Number(test.Thrust_measured_N), cc = Number(test.EngineDisplacement_cc);
-    const thrustPerCc = test.Thrust_measured_N != null && String(test.Thrust_measured_N).trim() !== "" &&
+    const thrust = Number(test.Thrust_calculated_N), cc = Number(test.EngineDisplacement_cc);
+    const thrustPerCc = test.Thrust_calculated_N != null && String(test.Thrust_calculated_N).trim() !== "" &&
       Number.isFinite(thrust) && thrust > 0 && Number.isFinite(cc) && cc > 0 ? thrust / cc : null;
     return {tipSpeed, mach, pitchSpeed, thrustPerCc, tempC, assumedTemp: !hasTemp};
   }
@@ -832,7 +832,7 @@
         "Potkurin kärjen nopeus: " + metricText(derived.tipSpeed == null ? null : derived.tipSpeed * 3.6) + " km/h\n" +
         "Kärjen Mach-luku: " + metricText(derived.mach, 3) + tempNote + "\n" +
         "Teoreettinen nousunopeus: " + metricText(derived.pitchSpeed == null ? null : derived.pitchSpeed * 3.6) + " km/h\n" +
-        "Työntövoima / iskutilavuus: " + metricText(derived.thrustPerCc, 3) + " N/cm³\n" +
+        "Arvioitu työntövoima / iskutilavuus: " + metricText(derived.thrustPerCc, 3) + " N/cm³\n" +
         "CT₀-oletus: " + (saved.CT0_estimated ?? "ei laskettu") + "\n" +
         "Mitatuista tiedoista laskettu CT₀: " + (saved.CT0_calculated ?? "ei laskettu"), "success");
       if (!selectedEngineId && test.EngineMake && test.EngineModel) await loadEngines();
