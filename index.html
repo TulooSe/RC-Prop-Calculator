@@ -397,7 +397,7 @@
     const registeredEngineById = test.EngineID
       ? engines.find(engine => String(engine.EngineID).trim() === String(test.EngineID).trim())
       : null;
-    const normalizedEngineText = value => String(value ?? "").trim().replace(/\\s+/g, " ").toLocaleLowerCase("fi");
+    const normalizedEngineText = value => String(value ?? "").trim().replace(/\s+/g, " ").toLocaleLowerCase("fi");
     const registeredEngineByName = test.EngineMake && test.EngineModel
       ? engines.find(engine =>
           normalizedEngineText(engine.EngineMake) === normalizedEngineText(test.EngineMake) &&
