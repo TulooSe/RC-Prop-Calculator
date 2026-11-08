@@ -385,11 +385,18 @@
     return numericValue.toFixed(2);
   }
 
+  // Muuntaa myös suomalaisella desimaalipilkulla palautetut numerot JavaScript-luvuiksi.
+  function toNumber(value) {
+    if (value == null || String(value).trim() === "") return NaN;
+    return Number(String(value).trim().replace(",", "."));
+  }
+
   // Johdetut suureet lasketaan selaimessa, eikä niitä tallenneta tietokantaan.
   function calculateDerivedMetrics(test) {
-    const d = Number(test.PropDiameter_in), p = Number(test.PropPitch_in), rpm = Number(test.RPM_measured);
-    const hasTemp = test.AmbientTemp_C != null && String(test.AmbientTemp_C).trim() !== "" && Number.isFinite(Number(test.AmbientTemp_C));
-    const tempC = hasTemp ? Number(test.AmbientTemp_C) : 20;
+    const d = toNumber(test.PropDiameter_in), p = toNumber(test.PropPitch_in), rpm = toNumber(test.RPM_measured);
+    const parsedTemp = toNumber(test.AmbientTemp_C);
+    const hasTemp = Number.isFinite(parsedTemp);
+    const tempC = hasTemp ? parsedTemp : 20;
     const tipSpeed = Number.isFinite(d) && d > 0 && Number.isFinite(rpm) && rpm > 0 ? Math.PI * d * 0.0254 * rpm / 60 : null;
     const soundSpeed = Math.sqrt(1.4 * 287.05 * (tempC + 273.15));
     const mach = tipSpeed == null ? null : tipSpeed / soundSpeed;
@@ -410,7 +417,7 @@
     const displacementValue = test.EngineDisplacement_cc != null && String(test.EngineDisplacement_cc).trim() !== ""
       ? test.EngineDisplacement_cc
       : registeredEngine?.EngineDisplacement_cc;
-    const thrust = Number(thrustValue), cc = Number(displacementValue);
+    const thrust = toNumber(thrustValue), cc = toNumber(displacementValue);
     const thrustPerCc = thrustValue != null && String(thrustValue).trim() !== "" &&
       displacementValue != null && String(displacementValue).trim() !== "" &&
       Number.isFinite(thrust) && thrust > 0 && Number.isFinite(cc) && cc > 0 ? thrust / cc : null;
