@@ -122,7 +122,7 @@
     <p id="testsStatus" class="table-note" role="status" aria-live="polite">Testejä ei ole vielä ladattu.</p>
     <div class="table-wrap">
       <table aria-label="Tallennetut testimittaukset">
-        <thead><tr><th>Päivä</th><th>Moottori</th><th>Potkuri</th><th>Kierrosluku<br>(r/min)</th><th>Mitattu työntövoima<br>(N)</th><th>Arvioitu työntövoima<br>(N)</th><th>CT₀<br>Mitattu</th><th>CT₀<br>Oletus</th><th>Data tila</th><th>Laatutarkistus</th><th>Testitunnus</th></tr></thead>
+        <thead><tr><th>Päivä</th><th>Moottori</th><th>Potkuri</th><th>Kierrosluku<br>(r/min)</th><th>Kärjen nopeus<br>(km/h)</th><th>Kärjen Mach</th><th>Teoreettinen nousunopeus<br>(km/h)</th><th>Työntövoima / cm³<br>(N/cm³)</th><th>Mitattu työntövoima<br>(N)</th><th>Arvioitu työntövoima<br>(N)</th><th>CT₀<br>Mitattu</th><th>CT₀<br>Oletus</th><th>Data tila</th><th>Laatutarkistus</th><th>Testitunnus</th></tr></thead>
         <tbody id="testsBody"><tr><td colspan="11">Testejä ei ole vielä ladattu.</td></tr></tbody>
       </table>
     </div>
@@ -382,6 +382,24 @@
     return numericValue.toFixed(2);
   }
 
+  // Johdetut suureet lasketaan selaimessa, eikä niitä tallenneta tietokantaan.
+  function calculateDerivedMetrics(test) {
+    const d = Number(test.PropDiameter_in), p = Number(test.PropPitch_in), rpm = Number(test.RPM_measured);
+    const hasTemp = test.AmbientTemp_C != null && String(test.AmbientTemp_C).trim() !== "" && Number.isFinite(Number(test.AmbientTemp_C));
+    const tempC = hasTemp ? Number(test.AmbientTemp_C) : 20;
+    const tipSpeed = Number.isFinite(d) && d > 0 && Number.isFinite(rpm) && rpm > 0 ? Math.PI * d * 0.0254 * rpm / 60 : null;
+    const soundSpeed = Math.sqrt(1.4 * 287.05 * (tempC + 273.15));
+    const mach = tipSpeed == null ? null : tipSpeed / soundSpeed;
+    const pitchSpeed = Number.isFinite(p) && p > 0 && Number.isFinite(rpm) && rpm > 0 ? p * 0.0254 * rpm / 60 : null;
+    const thrust = Number(test.Thrust_measured_N), cc = Number(test.EngineDisplacement_cc);
+    const thrustPerCc = test.Thrust_measured_N != null && String(test.Thrust_measured_N).trim() !== "" &&
+      Number.isFinite(thrust) && thrust > 0 && Number.isFinite(cc) && cc > 0 ? thrust / cc : null;
+    return {tipSpeed, mach, pitchSpeed, thrustPerCc, tempC, assumedTemp: !hasTemp};
+  }
+  function metricText(value, decimals = 1) {
+    return value == null || !Number.isFinite(value) ? "—" : value.toFixed(decimals);
+  }
+
   function addCell(row, value) {
     const cell = document.createElement("td");
     cell.textContent = value == null || value === "" ? "—" : String(value);
@@ -527,7 +545,7 @@
     if (!filtered.length) {
       const row = document.createElement("tr");
       const cell = document.createElement("td");
-      cell.colSpan = 11;
+      cell.colSpan = 15;
       cell.textContent = savedTests.length ? "Suodattimilla ei löytynyt testejä." : "Tallennettuja testejä ei löytynyt.";
       row.appendChild(cell);
       testsBody.appendChild(row);
@@ -541,6 +559,11 @@
         addCell(row, engine || test.EngineID);
         addCell(row, prop + (test.BladeCount ? " · " + test.BladeCount + " lapaa" : ""));
         addCell(row, test.RPM_measured);
+        const metrics = calculateDerivedMetrics(test);
+        addCell(row, metricText(metrics.tipSpeed == null ? null : metrics.tipSpeed * 3.6));
+        addCell(row, metricText(metrics.mach, 3) + (metrics.assumedTemp && metrics.mach != null ? " *" : ""));
+        addCell(row, metricText(metrics.pitchSpeed == null ? null : metrics.pitchSpeed * 3.6));
+        addCell(row, metricText(metrics.thrustPerCc, 3));
         addCell(row, formatThrust(test.Thrust_measured_N));
         addCell(row, formatThrust(test.Thrust_calculated_N));
         addCell(row, test.CT0_calculated);
@@ -580,7 +603,7 @@
     testsBody.replaceChildren();
     const loadingRow = document.createElement("tr");
     const loadingCell = document.createElement("td");
-    loadingCell.colSpan = 11;
+    loadingCell.colSpan = 15;
     loadingCell.textContent = "Ladataan…";
     loadingRow.appendChild(loadingCell);
     testsBody.appendChild(loadingRow);
@@ -797,14 +820,20 @@
     try {
       const result = await apiPost({ action: "saveTest", test });
       const saved = result.test || {};
+      const derived = calculateDerivedMetrics({ ...test, ...saved });
+      const tempNote = derived.assumedTemp ? " (20 °C oletus)" : " (" + derived.tempC.toFixed(1) + " °C)";
       showStatus(
-        "Tallennus onnistui!\n" +
-        "Testitunnus: " + (saved.TestID || "ei palautettu") + "\n" +
-        "Moottoritunnus: " + (saved.EngineID || test.EngineID || "ei palautettu") + "\n" +
-        "Tila: " + (saved.DataStatus || "ei ilmoitettu") + "\n" +
-        "Mitattu työntövoima (N): " + (saved.Thrust_measured_N ?? "ei mitattu") + "\n" +
-        "Arvioitu työntövoima (N): " + (saved.Thrust_calculated_N ?? "ei laskettu") + "\n" +
-        "CT₀-oletus: " + (saved.CT0_estimated ?? "ei laskettu") + "\n" +
+        "Tallennus onnistui!\\n" +
+        "Testitunnus: " + (saved.TestID || "ei palautettu") + "\\n" +
+        "Moottoritunnus: " + (saved.EngineID || test.EngineID || "ei palautettu") + "\\n" +
+        "Tila: " + (saved.DataStatus || "ei ilmoitettu") + "\\n" +
+        "Mitattu työntövoima (N): " + (saved.Thrust_measured_N ?? "ei mitattu") + "\\n" +
+        "Arvioitu työntövoima (N): " + (saved.Thrust_calculated_N ?? "ei laskettu") + "\\n" +
+        "Potkurin kärjen nopeus: " + metricText(derived.tipSpeed == null ? null : derived.tipSpeed * 3.6) + " km/h\\n" +
+        "Kärjen Mach-luku: " + metricText(derived.mach, 3) + tempNote + "\\n" +
+        "Teoreettinen nousunopeus: " + metricText(derived.pitchSpeed == null ? null : derived.pitchSpeed * 3.6) + " km/h\\n" +
+        "Työntövoima / iskutilavuus: " + metricText(derived.thrustPerCc, 3) + " N/cm³\\n" +
+        "CT₀-oletus: " + (saved.CT0_estimated ?? "ei laskettu") + "\\n" +
         "Mitatuista tiedoista laskettu CT₀: " + (saved.CT0_calculated ?? "ei laskettu"), "success");
       if (!selectedEngineId && test.EngineMake && test.EngineModel) await loadEngines();
       await loadTests();
