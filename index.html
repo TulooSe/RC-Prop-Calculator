@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>RC Prop Calculator</title>
+  <title>RC Prop Calculator</title><!-- UI v1.4: CP0 and static propeller power; based on full v1.3 app -->
   <link rel="stylesheet" href="style.css">
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   
@@ -122,11 +122,11 @@
     <p id="testsStatus" class="table-note" role="status" aria-live="polite">Testejä ei ole vielä ladattu.</p>
     <div class="table-wrap">
       <table aria-label="Tallennetut testimittaukset">
-        <thead><tr><th>Päivä</th><th>Moottori</th><th>Potkuri</th><th>Kierrosluku<br>(r/min)</th><th>Kärjen nopeus<br>(km/h)</th><th>Kärjen Mach</th><th>Teoreettinen nousunopeus<br>(km/h)</th><th>Arvioitu työntövoima / iskutilavuus<br>(N/cm³)</th><th>Mitattu työntövoima<br>(N)</th><th>Arvioitu työntövoima<br>(N)</th><th>CT₀<br>Mitattu</th><th>CT₀<br>Oletus</th><th>Data tila</th><th>Laatutarkistus</th><th>Testitunnus</th></tr></thead>
-        <tbody id="testsBody"><tr><td colspan="11">Testejä ei ole vielä ladattu.</td></tr></tbody>
+        <thead><tr><th>Päivä</th><th>Moottori</th><th>Potkuri</th><th>Kierrosluku<br>(r/min)</th><th>Kärjen nopeus<br>(km/h)</th><th>Kärjen Mach</th><th>Teoreettinen nousunopeus<br>(km/h)</th><th>Arvioitu työntövoima / iskutilavuus<br>(N/cm³)</th><th>Mitattu työntövoima<br>(N)</th><th>Arvioitu työntövoima<br>(N)</th><th>CT₀<br>Mitattu</th><th>CT₀<br>Oletus</th><th>Käytetty CP₀</th><th>Arvioitu staattinen tehontarve<br>(W)</th><th>Data tila</th><th>Laatutarkistus</th><th>Testitunnus</th></tr></thead>
+        <tbody id="testsBody"><tr><td colspan="17">Testejä ei ole vielä ladattu.</td></tr></tbody>
       </table>
     </div>
-    <p class="table-note">Työntövoima/iskutilavuus on laskennallinen arvio. Se perustuu CT₀-oletukseen ja ilman tiheyteen, ei mitattuun työntövoimaan. Taulukkoa voi vierittää vaakasuunnassa, jos kaikki sarakkeet eivät mahdu näytölle.</p>
+    <p class="table-note">Työntövoima/iskutilavuus on laskennallinen arvio. Se perustuu CT₀-oletukseen ja ilman tiheyteen, ei mitattuun työntövoimaan. Arvioitu tehontarve tarkoittaa potkurin staattista absorboimaa tehoa, ei moottorin nimellistehoa eikä lennonaikaista tehontarvetta. CP₀-arvo näytetään vain, jos rekisteripotkurille on määritetty kerroin. Taulukkoa voi vierittää vaakasuunnassa, jos kaikki sarakkeet eivät mahdu näytölle.</p>
   </section>
 </main>
 <script>
@@ -555,7 +555,9 @@
       MISSING_INSTRUMENT_INFO: "Mittalaitetiedot puuttuvat",
       MISSING_ENGINE_DETAILS: "Moottorin tiedot ovat puutteelliset",
       MISSING_SOURCE: "Lähdetieto puuttuu",
-      ASSUMED_CT0: "Työntövoima arvioitu yleisellä CT₀-oletuksella"
+      ASSUMED_CT0: "Työntövoima arvioitu yleisellä CT₀-oletuksella",
+      MISSING_CP0: "Potkurille ei ole määritetty CP₀-kerrointa",
+      MISSING_POWER_DENSITY: "CP₀ on käytettävissä, mutta ilman tiheys puuttuu"
     };
     return labels[flag] || flag;
   }
@@ -572,7 +574,7 @@
     if (!filtered.length) {
       const row = document.createElement("tr");
       const cell = document.createElement("td");
-      cell.colSpan = 15;
+      cell.colSpan = 17;
       cell.textContent = savedTests.length ? "Suodattimilla ei löytynyt testejä." : "Tallennettuja testejä ei löytynyt.";
       row.appendChild(cell);
       testsBody.appendChild(row);
@@ -595,6 +597,20 @@
         addCell(row, formatThrust(test.Thrust_calculated_N));
         addCell(row, test.CT0_calculated);
         addCell(row, test.CT0_estimated);
+        const cp0Cell = document.createElement("td");
+        if (test.CP0_used !== "" && test.CP0_used != null) {
+          const cp0Value = Number(test.CP0_used);
+          cp0Cell.textContent = Number.isFinite(cp0Value)
+            ? cp0Value.toFixed(4) + (test.CP0_method_used ? " · " + test.CP0_method_used : "")
+            : String(test.CP0_used);
+          if (test.CP0_source_used) cp0Cell.title = "Lähde: " + test.CP0_source_used;
+        } else {
+          cp0Cell.textContent = "—";
+        }
+        row.appendChild(cp0Cell);
+        const powerValue = test.PropPower_estimated_W;
+        const powerNumber = powerValue === "" || powerValue == null ? NaN : Number(powerValue);
+        addCell(row, Number.isFinite(powerNumber) ? Math.round(powerNumber) : "—");
         const dataStatusCell = document.createElement("td");
         const dataStatus = String(test.DataStatus || "");
         dataStatusCell.textContent = dataStatus ? dataStatus.charAt(0).toUpperCase() : "—";
@@ -630,7 +646,7 @@
     testsBody.replaceChildren();
     const loadingRow = document.createElement("tr");
     const loadingCell = document.createElement("td");
-    loadingCell.colSpan = 15;
+    loadingCell.colSpan = 17;
     loadingCell.textContent = "Ladataan…";
     loadingRow.appendChild(loadingCell);
     testsBody.appendChild(loadingRow);
@@ -644,7 +660,7 @@
       testsBody.replaceChildren();
       const row = document.createElement("tr");
       const cell = document.createElement("td");
-      cell.colSpan = 11;
+      cell.colSpan = 17;
       cell.textContent = "Testilistan lataus epäonnistui.";
       row.appendChild(cell);
       testsBody.appendChild(row);
@@ -861,7 +877,10 @@
         "Teoreettinen nousunopeus: " + metricText(derived.pitchSpeed == null ? null : derived.pitchSpeed * 3.6) + " km/h\n" +
         "Arvioitu työntövoima / iskutilavuus: " + metricText(derived.thrustPerCc, 3) + " N/cm³\n" +
         "CT₀-oletus: " + (saved.CT0_estimated ?? "ei laskettu") + "\n" +
-        "Mitatuista tiedoista laskettu CT₀: " + (saved.CT0_calculated ?? "ei laskettu"), "success");
+        "Mitatuista tiedoista laskettu CT₀: " + (saved.CT0_calculated ?? "ei laskettu") + "\\n" +
+        "Käytetty CP₀: " + (saved.CP0_used ?? "ei käytettävissä") + "\\n" +
+        "Arvioitu potkurin staattinen tehontarve: " +
+          (saved.PropPower_estimated_W != null && saved.PropPower_estimated_W !== "" ? Math.round(Number(saved.PropPower_estimated_W)) + " W" : "ei laskettu"), "success");
       if (!selectedEngineId && test.EngineMake && test.EngineModel) await loadEngines();
       await loadTests();
     } catch (error) {
