@@ -99,12 +99,14 @@
       </div>
       <p id="weatherStatus" class="table-note" role="status" aria-live="polite"></p>
       <div class="save-panel">
-        <button id="saveButton" type="submit">Tallenna testimittaus</button>
+        <button id="calculateButton" class="secondary-button" type="button">Laske</button>
+        <button id="saveButton" type="submit" disabled>Tallenna testimittaus</button>
+        <p class="table-note">Laske näyttää simulointitulokset tallentamatta niitä. Tallennus tehdään erikseen.</p>
       </div>
     </div>
     <section class="result-panel" aria-labelledby="resultHeading">
       <h3 id="resultHeading">Testin tulos</h3>
-      <p class="result-intro">Tallennuksen tila ja testin laskentatulokset näkyvät tässä.</p>
+      <p class="result-intro">Simulointitulokset näkyvät tässä ennen tallennusta. Laskenta ei tallenna tietoja.</p>
       <div id="status" role="status" aria-live="polite"></div>
     </section>
     </div>
@@ -116,13 +118,13 @@
     <p class="intro">Selaa aiemmin tallennettuja mittauksia. Lista on vain luku -tilassa.</p>
     <div class="filters">
       <div class="field"><label for="testSearch">Hae moottoria, potkuria tai testitunnusta</label><input id="testSearch" type="search" placeholder="Esim. Saito, 25 × 8 tai PT-..."></div>
-      <div class="field"><label for="statusFilter">Datan tila</label><select id="statusFilter"><option value="">Kaikki tilat</option><option value="UNREVIEWED">UNREVIEWED</option><option value="APPROVED">APPROVED</option><option value="REJECTED">REJECTED</option></select></div>
+      <div class="field"><label for="statusFilter">Datan tila</label><select id="statusFilter"><option value="">Kaikki tilat</option><option value="UNREVIEWED">Tarkastamaton</option><option value="REVIEWED">Tarkistettu</option><option value="VERIFIED">Vahvistettu mittaustulos</option><option value="APPROVED">Hyväksytty</option><option value="REJECTED">Hylätty</option></select></div>
     </div>
     <button id="refreshTests" class="secondary-button" type="button">Päivitä testilista</button>
     <p id="testsStatus" class="table-note" role="status" aria-live="polite">Testejä ei ole vielä ladattu.</p>
     <div class="table-wrap">
       <table aria-label="Tallennetut testimittaukset">
-        <thead><tr><th>Päivä</th><th>Moottori</th><th>Potkuri</th><th>Kierrosluku<br>(r/min)</th><th>Kärjen nopeus<br>(km/h)</th><th>Kärjen Mach</th><th>Teoreettinen nousunopeus<br>(km/h)</th><th>Arvioitu työntövoima / iskutilavuus<br>(N/cm³)</th><th>Mitattu työntövoima<br>(N)</th><th>Arvioitu työntövoima<br>(N)</th><th>CT₀<br>Mitattu</th><th>CT₀<br>Oletus</th><th>Käytetty CP₀</th><th>Arvioitu staattinen tehontarve<br>(W)</th><th>Data tila</th><th>Laatutarkistus</th><th>Testitunnus</th></tr></thead>
+        <thead><tr><th>Päivä</th><th>Moottori</th><th>Potkuri</th><th>Kierrosluku<br>(r/min)</th><th>Potkurin kärjen nopeus<br>(m/s)</th><th>Kärjen Mach</th><th>Teoreettinen nousunopeus<br>(km/h)</th><th>Arvioitu työntövoima / iskutilavuus<br>(N/cm³)</th><th>Mitattu työntövoima<br>(N)</th><th>Arvioitu työntövoima<br>(N)</th><th>CT₀<br>Mitattu</th><th>CT₀<br>Oletus</th><th>Käytetty CP₀</th><th>Arvioitu staattinen tehontarve<br>(W)</th><th>Data tila</th><th>Laatutarkistus</th><th>Testitunnus</th></tr></thead>
         <tbody id="testsBody"><tr><td colspan="17">Testejä ei ole vielä ladattu.</td></tr></tbody>
       </table>
     </div>
@@ -130,7 +132,7 @@
   </section>
 </main>
 <script>
-  const API_URL = "https://script.google.com/macros/s/AKfycbxQx7WE73sQJVkkwpJOCHZoUPDGBwwRo9Jmb3FcRAe2Bp93VYAlfM6SbxvgfNdD0eg/exec";
+  const API_URL = "https://script.google.com/macros/s/AKfycbyhXML36Ylr8fECVM-w3tY6PBxVNGdyYXppNxthFOm7DsvH5SQmxK-Wlw-6UG6dgQM/exec";
   // Korvaa tämä Google Cloud Consolessa luodulla OAuth 2.0 Web Client ID:llä.
   const GOOGLE_CLIENT_ID = "355241847834-ugpnpsput0l991aahpdrvgf4vtfl6dl1.apps.googleusercontent.com";
   let googleIdToken = "";
@@ -562,6 +564,17 @@
     return labels[flag] || flag;
   }
 
+  function dataStatusLabel(status) {
+    const labels = {
+      UNREVIEWED: "Tarkastamaton",
+      REVIEWED: "Tarkistettu",
+      VERIFIED: "Vahvistettu mittaustulos",
+      APPROVED: "Hyväksytty",
+      REJECTED: "Hylätty"
+    };
+    return labels[String(status || "").toUpperCase()] || status;
+  }
+
   function renderTests() {
     const query = testSearch.value.trim().toLocaleLowerCase("fi");
     const wantedStatus = statusFilter.value;
@@ -589,7 +602,7 @@
         addCell(row, prop + (test.BladeCount ? " · " + test.BladeCount + " lapaa" : ""));
         addCell(row, test.RPM_measured);
         const metrics = calculateDerivedMetrics(test);
-        addCell(row, metricText(metrics.tipSpeed == null ? null : metrics.tipSpeed * 3.6));
+        addCell(row, metricText(metrics.tipSpeed));
         addCell(row, metricText(metrics.mach, 3) + (metrics.assumedTemp && metrics.mach != null ? " *" : ""));
         addCell(row, metricText(metrics.pitchSpeed == null ? null : metrics.pitchSpeed * 3.6));
         addCell(row, metricText(metrics.thrustPerCc, 3));
@@ -613,8 +626,8 @@
         addCell(row, Number.isFinite(powerNumber) ? Math.round(powerNumber) : "—");
         const dataStatusCell = document.createElement("td");
         const dataStatus = String(test.DataStatus || "");
-        dataStatusCell.textContent = dataStatus ? dataStatus.charAt(0).toUpperCase() : "—";
-        dataStatusCell.title = dataStatus || "Data tila puuttuu";
+        dataStatusCell.textContent = dataStatus ? dataStatusLabel(dataStatus) : "—";
+        dataStatusCell.title = dataStatus ? dataStatusLabel(dataStatus) : "Datan tila puuttuu";
         dataStatusCell.setAttribute("aria-label", dataStatus || "Data tila puuttuu");
         dataStatusCell.style.textAlign = "center";
         row.appendChild(dataStatusCell);
@@ -781,21 +794,33 @@
 
   window.addEventListener("load", initGoogleSignIn);
 
-  form.addEventListener("submit", async event => {
-    event.preventDefault();
+  const calculateButton = document.getElementById("calculateButton");
+  let previewReady = false;
+  let previewSnapshot = "";
+
+  function invalidatePreview() {
+    previewReady = false;
+    previewSnapshot = "";
+    button.disabled = true;
+  }
+
+  function collectTestData() {
     const sourceType = document.getElementById("source").value;
     const sourceUrl = document.getElementById("sourceUrl").value.trim();
     const thrustText = document.getElementById("thrust").value.trim();
     const densityText = document.getElementById("density").value.trim();
     const pitchText = document.getElementById("pitch").value.trim();
     const selectedEngineId = engineSelect.value;
+    const selectedProp = propellers.find(p => p.PropellerID === propellerSelect.value);
+    const selectedPropMatches = selectedProp && selectedPropellerMatchesInputs(selectedProp);
+    const errors = [];
 
-    if (sourceType !== "OwnTest" && !sourceUrl) return showStatus("Anna lähteen URL, kun kyseessä ei ole oma mittaus.", "error");
-    if (thrustText !== "" && (!Number.isFinite(Number(thrustText)) || Number(thrustText) <= 0)) return showStatus("Työntövoiman pitää olla positiivinen luku tai kentän pitää olla tyhjä.", "error");
-    if (!densityText || !Number.isFinite(Number(densityText)) || Number(densityText) <= 0) return showStatus("Tarkista ilman tiheys.", "error");
+    if (sourceType !== "OwnTest" && !sourceUrl) errors.push("Anna lähteen URL, kun kyseessä ei ole oma mittaus.");
+    if (thrustText !== "" && (!Number.isFinite(Number(thrustText)) || Number(thrustText) <= 0)) errors.push("Työntövoiman pitää olla positiivinen luku tai tyhjä.");
+    if (!densityText || !Number.isFinite(Number(densityText)) || Number(densityText) <= 0) errors.push("Tarkista ilman tiheys.");
     const ct0Text = document.getElementById("ct0Estimate").value.trim();
-    if (!ct0Text || !Number.isFinite(Number(ct0Text)) || Number(ct0Text) <= 0 || Number(ct0Text) > 1) return showStatus("CT₀-oletuksen pitää olla suurempi kuin 0 ja enintään 1.", "error");
-    if (!selectedEngineId && (!engineFields.EngineMake.value.trim() || !engineFields.EngineModel.value.trim())) return showStatus("Anna uuden moottorin valmistaja ja malli tai valitse moottori rekisteristä.", "error");
+    if (!ct0Text || !Number.isFinite(Number(ct0Text)) || Number(ct0Text) <= 0 || Number(ct0Text) > 1) errors.push("CT₀-oletuksen pitää olla suurempi kuin 0 ja enintään 1.");
+    if (!selectedEngineId && (!engineFields.EngineMake.value.trim() || !engineFields.EngineModel.value.trim())) errors.push("Anna uuden moottorin valmistaja ja malli tai valitse moottori rekisteristä.");
 
     const test = {
       TestDate: document.getElementById("date").value,
@@ -816,38 +841,16 @@
       ThrustInput_Unit: thrustText === "" ? "" : document.getElementById("thrustUnit").value,
       AirDensity_kg_m3: Number(densityText),
       AirDensitySource: densitySource,
-      CT0_estimated: Number(document.getElementById("ct0Estimate").value),
+      CT0_estimated: Number(ct0Text),
       CT0_estimation_method: "GENERIC_ASSUMPTION",
       AmbientTemp_C: ambientTempInput.value.trim() === "" ? "" : Number(ambientTempInput.value),
       Pressure_hPa: pressureInput.value.trim() === "" ? "" : Number(pressureInput.value),
       Notes: [document.getElementById("notes").value.trim(), weatherProvenance].filter(Boolean).join(" | "),
-      PropellerID: (() => {
-        const selected = propellers.find(
-          p => p.PropellerID === propellerSelect.value
-        );
-        return selected && selectedPropellerMatchesInputs(selected)
-          ? selected.PropellerID
-          : "";
-      })(),
-      PropMake: (() => {
-        const selected = propellers.find(
-          p => p.PropellerID === propellerSelect.value
-        );
-        return selected && selectedPropellerMatchesInputs(selected)
-          ? selected.PropellerBrand || ""
-          : "";
-      })(),
-      PropModel: (() => {
-        const selected = propellers.find(
-          p => p.PropellerID === propellerSelect.value
-        );
-        return selected && selectedPropellerMatchesInputs(selected)
-          ? selected.PropellerModel || ""
-          : "";
-      })(),
+      PropellerID: selectedPropMatches ? selectedProp.PropellerID : "",
+      PropMake: selectedPropMatches ? selectedProp.PropellerBrand || "" : "",
+      PropModel: selectedPropMatches ? selectedProp.PropellerModel || "" : ""
     };
 
-    const errors = [];
     if (!test.TestDate) errors.push("Anna mittauspäivä.");
     if (!Number.isFinite(test.PropDiameter_in) || test.PropDiameter_in <= 0) errors.push("Potkurin halkaisijan pitää olla positiivinen luku.");
     if (pitchText === "") errors.push("Potkurin nousu on pakollinen tieto.");
@@ -855,39 +858,123 @@
     if (!Number.isInteger(test.BladeCount) || test.BladeCount < 1 || test.BladeCount > 8) errors.push("Lapojen määrän pitää olla kokonaisluku väliltä 1–8.");
     if (!Number.isFinite(test.RPM_measured) || test.RPM_measured <= 0) errors.push("Kierrosluvun pitää olla positiivinen luku.");
     if (test.EngineDisplacement_cc !== "" && (!Number.isFinite(test.EngineDisplacement_cc) || test.EngineDisplacement_cc <= 0)) errors.push("Iskutilavuuden pitää olla positiivinen luku tai tyhjä.");
-    if (errors.length) return showStatus(errors.join("\n"), "error");
+    if (test.AmbientTemp_C !== "" && (!Number.isFinite(test.AmbientTemp_C) || test.AmbientTemp_C <= -273.15)) errors.push("Lämpötila on fysikaalisesti virheellinen.");
+    if (test.Pressure_hPa !== "" && (!Number.isFinite(test.Pressure_hPa) || test.Pressure_hPa <= 0)) errors.push("Ilmanpaineen pitää olla positiivinen luku.");
+    return { test, selectedEngineId, selectedProp: selectedPropMatches ? selectedProp : null, errors };
+  }
 
+  function calculatePreview(test, selectedProp) {
+    const density = Number(test.AirDensity_kg_m3);
+    const rpm = Number(test.RPM_measured);
+    const diameterM = Number(test.PropDiameter_in) * 0.0254;
+    const revPerSecond = rpm / 60;
+    const ct0 = Number(test.CT0_estimated);
+    const thrustCalculatedN = ct0 * density * Math.pow(revPerSecond, 2) * Math.pow(diameterM, 4);
+    const cp0 = selectedProp ? toNumber(selectedProp.CP0_estimated) : NaN;
+    const propPowerW = Number.isFinite(cp0) && cp0 > 0
+      ? cp0 * density * Math.pow(revPerSecond, 3) * Math.pow(diameterM, 5)
+      : null;
+    const measuredThrustN = test.ThrustInput_Value === ""
+      ? null
+      : Number(test.ThrustInput_Value) * ({N:1, kgf:9.80665, lbf:4.4482216152605}[test.ThrustInput_Unit] || NaN);
+    const derived = calculateDerivedMetrics({ ...test, Thrust_calculated_N: thrustCalculatedN });
+    const displacement = toNumber(test.EngineDisplacement_cc);
+    const thrustPerCc = Number.isFinite(displacement) && displacement > 0
+      ? thrustCalculatedN / displacement
+      : derived.thrustPerCc;
+    return { thrustCalculatedN, measuredThrustN, propPowerW, cp0, derived: { ...derived, thrustPerCc } };
+  }
+
+  function showPreview(test, selectedProp, result) {
+    const d = result.derived;
+    const tempNote = d.assumedTemp ? " (20 °C oletus)" : ` (${d.tempC.toFixed(1)} °C)`;
+    const powerText = result.propPowerW == null
+      ? "Ei laskettu – potkurille ei ole rekisterissä CP₀-arvoa."
+      : `${Math.round(result.propPowerW)} W (${(result.propPowerW / 1000).toFixed(2)} kW, ${(result.propPowerW / 745.699872).toFixed(2)} hp)`;
+    const pitchSpeedText = d.pitchSpeed == null ? "—" : `${metricText(d.pitchSpeed)} m/s (${metricText(d.pitchSpeed * 3.6)} km/h)`;
+    showStatus(
+      "SIMULOINTI – ei tallennettu\n\n" +
+      `Moottori: ${test.EngineMake} ${test.EngineModel}${test.EngineDisplacement_cc ? " · " + test.EngineDisplacement_cc + " cm³" : ""}\n` +
+      `Potkuri: ${test.PropMake || (selectedProp && selectedProp.PropellerBrand) || ""} ${test.PropModel || (selectedProp && selectedProp.PropellerModel) || ""} ${test.PropDiameter_in}×${test.PropPitch_in} · ${test.BladeCount} lapaa\n` +
+      `Kierrosluku: ${test.RPM_measured} r/min\n\n` +
+      `Potkurin kärjen nopeus: ${metricText(d.tipSpeed)} m/s\n` +
+      `Kärjen Mach-luku: ${metricText(d.mach, 3)}${tempNote}\n` +
+      `Teoreettinen nousunopeus: ${pitchSpeedText}\n` +
+      `Arvioitu työntövoima: ${metricText(result.thrustCalculatedN, 2)} N (${metricText(result.thrustCalculatedN / 9.80665, 2)} kgf)\n` +
+      `Mitattu työntövoima: ${result.measuredThrustN == null ? "Ei annettu" : metricText(result.measuredThrustN, 2) + " N"}\n` +
+      `Arvioitu työntövoima / iskutilavuus: ${metricText(d.thrustPerCc, 3)} N/cm³\n` +
+      `Potkurin arvioitu ottama teho: ${powerText}\n` +
+      `Käytetty CT₀: ${Number(test.CT0_estimated).toFixed(3)} (yleisoletus)\n` +
+      `Käytetty CP₀: ${result.propPowerW == null ? "Ei käytettävissä" : result.cp0.toFixed(4) + (selectedProp.CP0_method ? " · " + selectedProp.CP0_method : "")}\n\n` +
+      "Arviot ovat laskennallisia, eivät mittaustuloksia. Potkurin tehontarve näkyy vain, jos valitulle rekisteripotkurille on määritetty CP₀.",
+      "success"
+    );
+  }
+
+  calculateButton.addEventListener("click", () => {
+    const collected = collectTestData();
+    if (collected.errors.length) {
+      invalidatePreview();
+      showStatus(collected.errors.join("\n"), "error");
+      return;
+    }
+    const preview = calculatePreview(collected.test, collected.selectedProp);
+    showPreview(collected.test, collected.selectedProp, preview);
+    previewReady = true;
+    previewSnapshot = JSON.stringify(collected.test);
+    button.disabled = false;
+  });
+
+  // Kaikki syötteiden muutokset vaativat uuden simuloinnin ennen tallennusta.
+  form.querySelectorAll("input, select").forEach(input => {
+    input.addEventListener("input", invalidatePreview);
+    input.addEventListener("change", invalidatePreview);
+  });
+
+  form.addEventListener("submit", async event => {
+    event.preventDefault();
+    const collected = collectTestData();
+    if (collected.errors.length) {
+      invalidatePreview();
+      showStatus(collected.errors.join("\n"), "error");
+      return;
+    }
+    if (!previewReady || previewSnapshot !== JSON.stringify(collected.test)) {
+      invalidatePreview();
+      showStatus("Laske ensin simulointitulokset. Jos olet muuttanut lähtötietoja, laske tulokset uudelleen ennen tallennusta.", "error");
+      return;
+    }
+
+    const { test, selectedEngineId } = collected;
     button.disabled = true;
     button.textContent = "Tallennetaan...";
-    showStatus("Lähetetään tietoja rajapintaan...", "info");
+    calculateButton.disabled = true;
+    showStatus("Tallennetaan testimittausta rajapintaan...", "info");
     try {
       const result = await apiPost({ action: "saveTest", test });
       const saved = result.test || {};
-      const derived = calculateDerivedMetrics({ ...test, ...saved });
-      const tempNote = derived.assumedTemp ? " (20 °C oletus)" : " (" + derived.tempC.toFixed(1) + " °C)";
       showStatus(
         "Tallennus onnistui!\n" +
         "Testitunnus: " + (saved.TestID || "ei palautettu") + "\n" +
         "Moottoritunnus: " + (saved.EngineID || test.EngineID || "ei palautettu") + "\n" +
-        "Tila: " + (saved.DataStatus || "ei ilmoitettu") + "\n" +
-        "Mitattu työntövoima (N): " + (saved.Thrust_measured_N ?? "ei mitattu") + "\n" +
-        "Arvioitu työntövoima (N): " + (saved.Thrust_calculated_N ?? "ei laskettu") + "\n" +
-        "Potkurin kärjen nopeus: " + metricText(derived.tipSpeed == null ? null : derived.tipSpeed * 3.6) + " km/h\n" +
-        "Kärjen Mach-luku: " + metricText(derived.mach, 3) + tempNote + "\n" +
-        "Teoreettinen nousunopeus: " + metricText(derived.pitchSpeed == null ? null : derived.pitchSpeed * 3.6) + " km/h\n" +
-        "Arvioitu työntövoima / iskutilavuus: " + metricText(derived.thrustPerCc, 3) + " N/cm³\n" +
-        "CT₀-oletus: " + (saved.CT0_estimated ?? "ei laskettu") + "\n" +
-        "Mitatuista tiedoista laskettu CT₀: " + (saved.CT0_calculated ?? "ei laskettu") + "\\n" +
-        "Käytetty CP₀: " + (saved.CP0_used ?? "ei käytettävissä") + "\\n" +
-        "Arvioitu potkurin staattinen tehontarve: " +
-          (saved.PropPower_estimated_W != null && saved.PropPower_estimated_W !== "" ? Math.round(Number(saved.PropPower_estimated_W)) + " W" : "ei laskettu"), "success");
+        "Tila: " + dataStatusLabel(saved.DataStatus || "UNREVIEWED") + "\n" +
+        "Mitattu työntövoima: " + (saved.Thrust_measured_N != null ? Number(saved.Thrust_measured_N).toFixed(2) + " N" : "ei mitattu") + "\n" +
+        "Arvioitu työntövoima: " + (saved.Thrust_calculated_N != null ? Number(saved.Thrust_calculated_N).toFixed(2) + " N" : "ei laskettu") + "\n" +
+        "Potkurin kärjen nopeus: " + metricText(calculateDerivedMetrics({ ...test, ...saved }).tipSpeed) + " m/s\n" +
+        "Arvioitu potkurin ottama teho: " +
+          (saved.PropPower_estimated_W != null && saved.PropPower_estimated_W !== "" ? Math.round(Number(saved.PropPower_estimated_W)) + " W" : "ei laskettu"),
+        "success"
+      );
       if (!selectedEngineId && test.EngineMake && test.EngineModel) await loadEngines();
       await loadTests();
+      previewReady = false;
+      previewSnapshot = "";
     } catch (error) {
       showStatus("Yhteys tai tallennus epäonnistui.\n" + error.message, "error");
     } finally {
-      button.disabled = false;
+      button.disabled = !previewReady;
       button.textContent = "Tallenna testimittaus";
+      calculateButton.disabled = false;
     }
   });
 </script>
