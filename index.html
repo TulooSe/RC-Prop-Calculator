@@ -7,6 +7,71 @@
   <link rel="stylesheet" href="style.css">
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   
+
+<style>
+/* Beta preview layout */
+#testForm .responsive-test-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-areas:
+    "source engine"
+    "conditions prop"
+    "weather result"
+    "calculate save";
+  gap: 1rem;
+  align-items: start;
+}
+#testForm .field-group { margin: 0; min-width: 0; }
+#testForm .field-group:nth-of-type(1) { grid-area: source; }
+#testForm .field-group:nth-of-type(2) { grid-area: engine; }
+#testForm .field-group:nth-of-type(3) { grid-area: prop; }
+#testForm .field-group:nth-of-type(4) { grid-area: conditions; }
+#testForm .weather-panel { grid-area: weather; min-width: 0; }
+#testForm .result-panel { grid-area: result; min-width: 0; }
+#testForm .calculate-panel { grid-area: calculate; }
+#testForm .save-action-panel { grid-area: save; }
+#testForm .action-panel {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  min-width: 0;
+}
+#testForm .compact-action {
+  width: auto !important;
+  min-height: 2.35rem !important;
+  height: 2.35rem !important;
+  padding: .35rem .8rem !important;
+  margin: 0 !important;
+  font-size: .95rem;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+#testForm .action-panel .table-note { margin: 0; }
+#testForm .weather-action button {
+  width: auto !important;
+  min-height: 2.35rem;
+  height: 2.35rem;
+  padding: .35rem .8rem;
+}
+#testForm .result-panel { align-self: stretch; }
+@media (max-width: 760px) {
+  #testForm .responsive-test-layout {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "source"
+      "conditions"
+      "engine"
+      "prop"
+      "weather"
+      "calculate"
+      "result"
+      "save";
+  }
+  #testForm .action-panel { justify-content: flex-start; }
+  #testForm .compact-action { width: auto !important; }
+}
+</style>
+
 </head>
 <body>
 <main>
@@ -29,7 +94,7 @@
   <div id="currentTestPanel" class="tab-panel" hidden>
   <h2>Testitiedot</h2>
   <form id="testForm">
-    <div class="form-groups">
+    <div class="responsive-test-layout">
 <section class="field-group">
       <h3>Lähde ja tunnistetiedot</h3>
       <div class="field-list">
@@ -53,6 +118,7 @@
       <div class="field-row"><label for="engineSelect">Valitse moottori</label><select id="engineSelect"><option value="">Uusi moottori – syötä tiedot alle</option></select><small>Valitse olemassa oleva moottori tai jätä uuden moottorin syöttö käyttöön.</small></div>
       </div>
     </section>
+
 <section class="field-group">
       <h3>Moottorin tiedot</h3>
       <div class="field-list">
@@ -63,20 +129,8 @@
       <div class="field-row"><label for="fuelType">Polttoaine</label><select id="fuelType"><option value="">Ei tiedossa / ei ilmoiteta</option><option value="glow">Hehkutulppapolttoaine</option><option value="gasoline">Bensiini</option><option value="diesel">Diesel</option><option value="other">Muu</option></select></div>
       </div>
     </section>
+
 <section class="field-group">
-      <h3>Potkuri ja mittaustulos</h3>
-      <div class="field-list">
-<div class="field-row"><label for="diameter">Potkurin halkaisija (tuumaa)</label><input id="diameter" type="number" min="1" max="100" step="any" value="25" required></div>
-      <div class="field-row"><label for="pitch">Potkurin nousu (tuumaa) *</label><input id="pitch" type="number" min="0.1" max="100" step="any" value="8" required></div>
-      <div class="field-row"><label for="blades">Lapojen määrä</label><input id="blades" type="number" min="1" max="8" step="1" value="2" required></div>
-      <div class="field-row"><label for="rpm">Mitattu kierrosluku (r/min)</label><input id="rpm" type="number" min="1" max="100000" step="1" value="6000" required></div>
-      <div class="field-row"><label for="thrust">Työntövoima</label><input id="thrust" type="number" min="0" step="any" placeholder="Jätä tyhjäksi, jos ei mitattu"></div>
-      <div class="field-row"><label for="thrustUnit">Työntövoiman yksikkö</label><select id="thrustUnit"><option value="kgf">kgf (kilogrammavoima)</option><option value="N">N (newton)</option><option value="lbf">lbf (paunavoima)</option></select></div>
-      </div>
-    </section>
-</div>
-    <div class="measurement-weather-row">
-    <section class="field-group">
       <h3>Mittausolosuhteet ja lähde</h3>
       <div class="field-list">
 <div class="field-row"><label for="density">Ilman tiheys (kg/m³)</label><input id="density" type="number" min="0.1" max="2" step="any" value="1.225" required><small id="densityHelp">Oletusarvo; merkitään oletusarvoksi.</small></div>
@@ -88,7 +142,20 @@
       <div class="field-row"><label for="notes">Lisätiedot</label><input id="notes" maxlength="500" placeholder="Esim. testipenkki ja olosuhteet"></div>
       </div>
     </section>
-    <div class="weather-panel">
+    
+<section class="field-group">
+      <h3>Potkurin tiedot</h3>
+      <div class="field-list">
+<div class="field-row"><label for="diameter">Potkurin halkaisija (tuumaa)</label><input id="diameter" type="number" min="1" max="100" step="any" value="25" required></div>
+      <div class="field-row"><label for="pitch">Potkurin nousu (tuumaa) *</label><input id="pitch" type="number" min="0.1" max="100" step="any" value="8" required></div>
+      <div class="field-row"><label for="blades">Lapojen määrä</label><input id="blades" type="number" min="1" max="8" step="1" value="2" required></div>
+      <div class="field-row"><label for="rpm">Mitattu kierrosluku (r/min)</label><input id="rpm" type="number" min="1" max="100000" step="1" value="6000" required></div>
+      <div class="field-row"><label for="thrust">Työntövoima</label><input id="thrust" type="number" min="0" step="any" placeholder="Jätä tyhjäksi, jos ei mitattu"></div>
+      <div class="field-row"><label for="thrustUnit">Työntövoiman yksikkö</label><select id="thrustUnit"><option value="kgf">kgf (kilogrammavoima)</option><option value="N">N (newton)</option><option value="lbf">lbf (paunavoima)</option></select></div>
+      </div>
+    </section>
+
+<div class="weather-panel">
       <h3>Historiallisten sääolosuhteiden haku</h3>
       <p class="table-note weather-intro" title="Hae päivämäärän ja paikan perusteella mallinnetut tuntisäätiedot. Voit antaa muistamasi lämpötilan löytääksesi sitä lähinnä olevat tunnit. Historiallisessa sääarkistossa on viivettä, joten aivan uusimmat päivät eivät välttämättä ole saatavilla.">Vie osoitin tämän ohjetekstin päälle saadaksesi lisätietoja.</p>
       <div class="grid">
@@ -98,18 +165,18 @@
         <div class="field-row"><label for="weatherHour">Valitse sopivin tunti</label><select id="weatherHour" disabled><option value="">Hae ensin säätiedot</option></select><small>Valinta täyttää lämpötilan, ilmanpaineen ja lasketun ilman tiheyden. Tiedot ovat säämallin arvioita, eivät välttämättä mittauspisteen havaintoja.</small></div>
       </div>
       <p id="weatherStatus" class="table-note" role="status" aria-live="polite"></p>
-      <div class="save-panel">
-        <button id="calculateButton" class="secondary-button" type="button">Laske</button>
-        <button id="saveButton" type="submit" disabled>Tallenna testimittaus</button>
-        <p class="table-note">Laske näyttää simulointitulokset tallentamatta niitä. Tallennus tehdään erikseen.</p>
-      </div>
+
     </div>
-    <section class="result-panel" aria-labelledby="resultHeading">
+    
+<div class="action-panel calculate-panel"><button id="calculateButton" class="secondary-button compact-action" type="button">Laske</button></div>
+<section class="result-panel" aria-labelledby="resultHeading">
       <h3 id="resultHeading">Testin tulos</h3>
       <p class="result-intro">Simulointitulokset näkyvät tässä ennen tallennusta. Laskenta ei tallenna tietoja.</p>
       <div id="status" role="status" aria-live="polite"></div>
     </section>
-    </div>
+    
+<div class="action-panel save-action-panel"><button id="saveButton" type="submit" class="compact-action" disabled>Tallenna testimittaus</button></div>
+</div>
   </form>
   </div>
 
@@ -132,7 +199,7 @@
   </section>
 </main>
 <script>
-  const API_URL = "https://script.google.com/macros/s/AKfycbxQx7WE73sQJVkkwpJOCHZoUPDGBwwRo9Jmb3FcRAe2Bp93VYAlfM6SbxvgfNdD0eg/exec";
+  const API_URL = "https://script.google.com/macros/s/AKfycbyhXML36Ylr8fECVM-w3tY6PBxVNGdyYXppNxthFOm7DsvH5SQmxK-Wlw-6UG6dgQM/exec";
   // Korvaa tämä Google Cloud Consolessa luodulla OAuth 2.0 Web Client ID:llä.
   const GOOGLE_CLIENT_ID = "355241847834-ugpnpsput0l991aahpdrvgf4vtfl6dl1.apps.googleusercontent.com";
   let googleIdToken = "";
