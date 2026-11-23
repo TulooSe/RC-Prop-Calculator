@@ -14,9 +14,9 @@
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   grid-template-areas:
-    "source engine prop"
-    "conditions weather result"
-    "calculate . save";
+    "source prop calculate"
+    "engine conditions result"
+    ". weather save";
   gap: 1rem;
   align-items: start;
 }
@@ -58,9 +58,9 @@
     grid-template-columns: minmax(0, 1fr);
     grid-template-areas:
       "source"
-      "conditions"
       "engine"
       "prop"
+      "conditions"
       "weather"
       "calculate"
       "result"
@@ -1046,3 +1046,5 @@
 </script>
 </body>
 </html>
+		
+						
