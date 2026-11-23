@@ -23,6 +23,9 @@
   min-width: 0;
 }
 #testForm .field-group { margin: 0; min-width: 0; }
+#testForm .field-group .field-list { display: flex; flex-direction: column; gap: .65rem; }
+#testForm .filter-count { margin: 0; font-size: .82rem; color: var(--muted, #666); }
+#testForm .selected-component-info { margin: 0; font-size: .9rem; }
 #testForm .action-panel {
   display: flex;
   align-items: center;
@@ -83,36 +86,21 @@
 <section class="field-group">
       <h3>Lähde ja tunnistetiedot</h3>
       <div class="field-list">
-<div class="field-row"><label for="alias">Nimimerkki</label><input id="alias" value="TestUser" maxlength="60"></div>
-      <div class="field-row"><label for="source">Tietolähde</label><select id="source"><option value="OwnTest">Oma mittaus</option><option value="YouTube">YouTube</option><option value="Website">Verkkosivu</option><option value="Publication">Julkaisu</option><option value="Other">Muu</option></select></div>
-      <div class="registry-filter-block">
-        <strong>Potkurin haku rekisteristä</strong>
-        <div class="field-row"><label for="propDiameterFilter">Halkaisija</label><select id="propDiameterFilter"><option value="">Kaikki halkaisijat</option></select></div>
-        <div class="field-row"><label for="propPitchFilter">Nousu</label><select id="propPitchFilter"><option value="">Kaikki nousut</option></select></div>
-        <div class="field-row"><label for="propSearch">Valmistaja / malli</label><input id="propSearch" type="search" placeholder="Esim. Fiala, Menz, 20x6"></div>
-        <p id="propFilterCount" class="filter-count" aria-live="polite"></p>
-      </div>
-      <div class="field-row"><label for="propellerSelect">Valitse potkuri</label><select id="propellerSelect"><option value="">Uusi potkuri – syötä mitat käsin</option></select><small>Rekisterin tiedot ovat alustavia. Tarkista potkurin malli ja mitat alkuperäisestä lähteestä.</small></div>
-      <div class="registry-filter-block">
-        <strong>Moottorin haku rekisteristä</strong>
-        <div class="field-row"><label for="engineMakeFilter">Valmistaja</label><select id="engineMakeFilter"><option value="">Kaikki merkit</option></select></div>
-        <div class="field-row"><label for="engineCcFilter">Iskutilavuus</label><select id="engineCcFilter"><option value="">Kaikki tilavuudet</option><option value="lt10">Alle 10 cm³</option><option value="10to30">10–30 cm³</option><option value="30to60">Yli 30–60 cm³</option><option value="gt60">Yli 60 cm³</option><option value="unknown">Ei ilmoitettu</option></select></div>
-        <div class="field-row"><label for="engineSearch">Mallin haku</label><input id="engineSearch" type="search" placeholder="Esim. FG-61, 33GT"></div>
-        <p id="engineFilterCount" class="filter-count" aria-live="polite"></p>
-      </div>
-      <div class="field-row"><label for="engineSelect">Valitse moottori</label><select id="engineSelect"><option value="">Uusi moottori – syötä tiedot alle</option></select><small>Valitse olemassa oleva moottori tai jätä uuden moottorin syöttö käyttöön.</small></div>
+        <div class="field-row"><label for="alias">Nimimerkki</label><input id="alias" value="TestUser" maxlength="60"></div>
+        <div class="field-row"><label for="source">Tietolähde</label><select id="source"><option value="OwnTest">Oma mittaus</option><option value="YouTube">YouTube</option><option value="Website">Verkkosivu</option><option value="Publication">Julkaisu</option><option value="Other">Muu</option></select></div>
       </div>
     </section>
-
-
 <section class="field-group">
-      <h3>Moottorin tiedot</h3>
+      <h3>Moottori</h3>
       <div class="field-list">
-<div class="field-row"><label for="engineMake">Moottorin valmistaja</label><input id="engineMake" placeholder="Esim. Saito" maxlength="80" required></div>
-      <div class="field-row"><label for="engineModel">Moottorin malli</label><input id="engineModel" placeholder="Esim. FG-61TS" maxlength="80" required></div>
-      <div class="field-row"><label for="engineCc">Iskutilavuus (cm³)</label><input id="engineCc" type="number" min="0.1" max="1000" step="any" placeholder="Esim. 10.0"></div>
-      <div class="field-row"><label for="engineType">Moottorityyppi</label><select id="engineType"><option value="">Ei tiedossa / ei ilmoiteta</option><option value="2-stroke">2-tahti</option><option value="4-stroke">4-tahti</option><option value="rotary">Wankel / rotaatiomoottori</option><option value="other-ic">Muu polttomoottori</option></select></div>
-      <div class="field-row"><label for="fuelType">Polttoaine</label><select id="fuelType"><option value="">Ei tiedossa / ei ilmoiteta</option><option value="glow">Hehkutulppapolttoaine</option><option value="gasoline">Bensiini</option><option value="diesel">Diesel</option><option value="other">Muu</option></select></div>
+        <div class="field-row"><label for="engineSearch">Hae moottoria rekisteristä</label><input id="engineSearch" type="search" placeholder="Valmistaja, malli tai iskutilavuus"></div>
+        <p id="engineFilterCount" class="filter-count" aria-live="polite"></p>
+        <div class="field-row"><label for="engineSelect">Valitse moottori</label><select id="engineSelect"><option value="">Uusi moottori – syötä tiedot alle</option></select><small>Valitse rekisteristä tai täytä tiedot alla uuden moottorin lisäämiseksi.</small></div>
+        <div class="field-row"><label for="engineMake">Valmistaja</label><input id="engineMake" placeholder="Esim. Saito" maxlength="80" required></div>
+        <div class="field-row"><label for="engineModel">Malli</label><input id="engineModel" placeholder="Esim. FG-61TS" maxlength="80" required></div>
+        <div class="field-row"><label for="engineCc">Iskutilavuus (cm³)</label><input id="engineCc" type="number" min="0.1" max="1000" step="any" placeholder="Esim. 10.0"></div>
+        <div class="field-row"><label for="engineType">Moottorityyppi</label><select id="engineType"><option value="">Ei tiedossa / ei ilmoiteta</option><option value="2-stroke">2-tahti</option><option value="4-stroke">4-tahti</option><option value="rotary">Wankel / rotaatiomoottori</option><option value="other-ic">Muu polttomoottori</option></select></div>
+        <div class="field-row"><label for="fuelType">Polttoaine</label><select id="fuelType"><option value="">Ei tiedossa / ei ilmoiteta</option><option value="glow">Hehkutulppapolttoaine</option><option value="gasoline">Bensiini</option><option value="diesel">Diesel</option><option value="other">Muu</option></select></div>
       </div>
     </section>
 
@@ -120,14 +108,14 @@
       </div>
       <div class="test-column test-column-middle">
 <section class="field-group">
-      <h3>Potkurin tiedot</h3>
+      <h3>Potkuri</h3>
       <div class="field-list">
-<div class="field-row"><label for="diameter">Potkurin halkaisija (tuumaa)</label><input id="diameter" type="number" min="1" max="100" step="any" value="25" required></div>
-      <div class="field-row"><label for="pitch">Potkurin nousu (tuumaa) *</label><input id="pitch" type="number" min="0.1" max="100" step="any" value="8" required></div>
-      <div class="field-row"><label for="blades">Lapojen määrä</label><input id="blades" type="number" min="1" max="8" step="1" value="2" required></div>
-      <div class="field-row"><label for="rpm">Mitattu kierrosluku (r/min)</label><input id="rpm" type="number" min="1" max="100000" step="1" value="6000" required></div>
-      <div class="field-row"><label for="thrust">Työntövoima</label><input id="thrust" type="number" min="0" step="any" placeholder="Jätä tyhjäksi, jos ei mitattu"></div>
-      <div class="field-row"><label for="thrustUnit">Työntövoiman yksikkö</label><select id="thrustUnit"><option value="kgf">kgf (kilogrammavoima)</option><option value="N">N (newton)</option><option value="lbf">lbf (paunavoima)</option></select></div>
+        <div class="field-row"><label for="propSearch">Hae potkuria rekisteristä</label><input id="propSearch" type="search" placeholder="Valmistaja, malli tai esim. 20x6"></div>
+        <p id="propFilterCount" class="filter-count" aria-live="polite"></p>
+        <div class="field-row"><label for="propellerSelect">Valitse potkuri</label><select id="propellerSelect"><option value="">Uusi potkuri – syötä mitat käsin</option></select><small>Rekisterin tiedot ovat alustavia. Tarkista potkurin malli ja mitat alkuperäisestä lähteestä.</small></div><p id="selectedPropellerInfo" class="selected-component-info" aria-live="polite"></p>
+        <div class="field-row"><label for="diameter">Halkaisija (tuumaa)</label><input id="diameter" type="number" min="1" max="100" step="any" value="25" required></div>
+        <div class="field-row"><label for="pitch">Nousu (tuumaa) *</label><input id="pitch" type="number" min="0.1" max="100" step="any" value="8" required></div>
+        <div class="field-row"><label for="blades">Lapojen määrä</label><input id="blades" type="number" min="1" max="8" step="1" value="2" required></div>
       </div>
     </section>
 
@@ -343,8 +331,6 @@
     engineFields.EngineModel.required = !isExisting;
   }
 
-  const engineMakeFilter = document.getElementById("engineMakeFilter");
-  const engineCcFilter = document.getElementById("engineCcFilter");
   const engineSearch = document.getElementById("engineSearch");
   const engineFilterCount = document.getElementById("engineFilterCount");
 
@@ -352,53 +338,28 @@
     return String(value == null ? "" : value).trim().toLocaleLowerCase("fi");
   }
 
-  function engineMatchesCc(engine, range) {
-    if (!range) return true;
-    const cc = Number(engine.EngineDisplacement_cc);
-    if (range === "unknown") return engine.EngineDisplacement_cc == null || engine.EngineDisplacement_cc === "";
-    if (!Number.isFinite(cc)) return false;
-    if (range === "lt10") return cc < 10;
-    if (range === "10to30") return cc >= 10 && cc <= 30;
-    if (range === "30to60") return cc > 30 && cc <= 60;
-    if (range === "gt60") return cc > 60;
-    return true;
-  }
-
   function renderEngineOptions() {
     const selectedId = engineSelect.value;
-    const make = normalizedSearch(engineMakeFilter.value);
     const query = normalizedSearch(engineSearch.value);
-    const range = engineCcFilter.value;
     const filtered = engines.filter(engine => {
-      const makeMatch = !make || normalizedSearch(engine.EngineMake) === make;
-      const haystack = [engine.EngineMake, engine.EngineModel, engine.EngineDisplacement_cc]
+      const haystack = [engine.EngineMake, engine.EngineModel, engine.EngineDisplacement_cc, engine.EngineType, engine.FuelType]
         .map(normalizedSearch).join(" ");
-      return makeMatch && engineMatchesCc(engine, range) && (!query || haystack.includes(query));
+      return !query || haystack.includes(query);
     }).sort((a,b) => {
       const byMake = String(a.EngineMake || "").localeCompare(String(b.EngineMake || ""), "fi");
       return byMake || String(a.EngineModel || "").localeCompare(String(b.EngineModel || ""), "fi", {numeric:true});
     });
-
     engineSelect.replaceChildren(new Option("Uusi moottori – syötä tiedot alle", ""));
     const selected = engines.find(engine => String(engine.EngineID) === String(selectedId));
     if (selected && !filtered.some(engine => String(engine.EngineID) === String(selectedId))) {
-      engineSelect.add(new Option("Valittu: " + selected.EngineMake + " " + selected.EngineModel + " (rajausten ulkopuolella)", selected.EngineID));
+      engineSelect.add(new Option("Valittu: " + selected.EngineMake + " " + selected.EngineModel, selected.EngineID));
     }
     filtered.forEach(engine => {
       const label = `${engine.EngineMake} ${engine.EngineModel}${engine.EngineDisplacement_cc ? " · " + engine.EngineDisplacement_cc + " cm³" : ""}`;
       engineSelect.add(new Option(label, engine.EngineID));
     });
     engineSelect.value = selectedId || "";
-    engineFilterCount.textContent = `Näytetään ${filtered.length} / ${engines.length} moottoria.`;
-  }
-
-  function populateEngineMakeFilter() {
-    const previous = engineMakeFilter.value;
-    engineMakeFilter.replaceChildren(new Option("Kaikki merkit", ""));
-    [...new Set(engines.map(engine => String(engine.EngineMake || "").trim()).filter(Boolean))]
-      .sort((a,b) => a.localeCompare(b, "fi"))
-      .forEach(make => engineMakeFilter.add(new Option(make, make.toLocaleLowerCase("fi"))));
-    engineMakeFilter.value = previous;
+    engineFilterCount.textContent = query ? `Hakutuloksia ${filtered.length} / ${engines.length}.` : `Moottorirekisterissä ${engines.length} moottoria.`;
   }
 
   engineSelect.addEventListener("change", () => {
@@ -406,15 +367,12 @@
     if (selected) setEngineFields(selected, true);
     else setEngineFields(null, false);
   });
-  [engineMakeFilter, engineCcFilter, engineSearch].forEach(control => {
-    control.addEventListener(control === engineSearch ? "input" : "change", renderEngineOptions);
-  });
+  engineSearch.addEventListener("input", renderEngineOptions);
 
   async function loadEngines() {
     try {
       const result = await apiPost({ action: "listEngines" });
       engines = Array.isArray(result.engines) ? result.engines : [];
-      populateEngineMakeFilter();
       renderEngineOptions();
       // Testihistoria voi latautua rinnakkain moottorirekisterin kanssa.
       // Päivitä se uudelleen, jotta iskutilavuus voidaan hakea EngineID:n perusteella.
@@ -500,8 +458,6 @@
     row.appendChild(cell);
   }
   const propellerSelect = document.getElementById("propellerSelect");
-  const propDiameterFilter = document.getElementById("propDiameterFilter");
-  const propPitchFilter = document.getElementById("propPitchFilter");
   const propSearch = document.getElementById("propSearch");
   const propFilterCount = document.getElementById("propFilterCount");
   let propellers = [];
@@ -513,54 +469,25 @@
 
   function renderPropellerOptions() {
     const selectedId = propellerSelect.value;
-    const diameter = propDiameterFilter.value;
-    const pitch = propPitchFilter.value;
     const query = normalizedSearch(propSearch.value);
     const filtered = propellers.filter(prop => {
-      const sizeMatch = !diameter || String(Number(prop.Diameter_in)) === diameter;
-      const pitchMatch = !pitch || String(Number(prop.Pitch_in)) === pitch;
-      const haystack = [prop.PropellerBrand, prop.PropellerModel, prop.Diameter_in, prop.Pitch_in, prop.Blades]
+      const haystack = [prop.PropellerBrand, prop.PropellerModel, prop.Diameter_in, prop.Pitch_in, prop.Blades, `${prop.Diameter_in}x${prop.Pitch_in}`]
         .map(normalizedSearch).join(" ");
-      return sizeMatch && pitchMatch && (!query || haystack.includes(query));
+      return !query || haystack.includes(query);
     }).sort((a,b) => Number(a.Diameter_in) - Number(b.Diameter_in) ||
       Number(a.Pitch_in) - Number(b.Pitch_in) ||
       String(a.PropellerBrand || "").localeCompare(String(b.PropellerBrand || ""), "fi") ||
       String(a.PropellerModel || "").localeCompare(String(b.PropellerModel || ""), "fi"));
-
     propellerSelect.replaceChildren(new Option("Uusi potkuri – syötä mitat käsin", ""));
     const selected = propellers.find(prop => String(prop.PropellerID) === String(selectedId));
     if (selected && !filtered.some(prop => String(prop.PropellerID) === String(selectedId))) {
-      propellerSelect.add(new Option("Valittu: " + propellerLabel(selected) + " (rajausten ulkopuolella)", selected.PropellerID));
+      propellerSelect.add(new Option("Valittu: " + propellerLabel(selected), selected.PropellerID));
     }
     filtered.forEach(prop => propellerSelect.add(new Option(propellerLabel(prop), prop.PropellerID)));
     propellerSelect.value = selectedId || "";
-    propFilterCount.textContent = `Näytetään ${filtered.length} / ${propellers.length} potkuria.`;
+    propFilterCount.textContent = query ? `Hakutuloksia ${filtered.length} / ${propellers.length}.` : `Potkurirekisterissä ${propellers.length} potkuria.`;
   }
 
-  function populatePropellerFilters() {
-    const previousDiameter = propDiameterFilter.value;
-    const previousPitch = propPitchFilter.value;
-    const diameters = [...new Set(propellers.map(prop => Number(prop.Diameter_in)).filter(Number.isFinite))]
-      .sort((a,b) => a-b);
-    propDiameterFilter.replaceChildren(new Option("Kaikki halkaisijat", ""));
-    diameters.forEach(value => propDiameterFilter.add(new Option(value + "”", String(value))));
-    if (diameters.includes(Number(previousDiameter))) propDiameterFilter.value = previousDiameter;
-
-    const pitches = [...new Set(propellers
-      .filter(prop => !propDiameterFilter.value || String(Number(prop.Diameter_in)) === propDiameterFilter.value)
-      .map(prop => Number(prop.Pitch_in)).filter(Number.isFinite))]
-      .sort((a,b) => a-b);
-    propPitchFilter.replaceChildren(new Option("Kaikki nousut", ""));
-    pitches.forEach(value => propPitchFilter.add(new Option(value + "”", String(value))));
-    if (pitches.includes(Number(previousPitch))) propPitchFilter.value = previousPitch;
-  }
-
-  propDiameterFilter.addEventListener("change", () => {
-    propPitchFilter.value = "";
-    populatePropellerFilters();
-    renderPropellerOptions();
-  });
-  propPitchFilter.addEventListener("change", renderPropellerOptions);
   propSearch.addEventListener("input", renderPropellerOptions);
   
   function selectedPropellerMatchesInputs(prop) {
@@ -581,11 +508,16 @@
       item => item.PropellerID === propellerSelect.value
     );
 
-    if (!prop) return;
+    const info = document.getElementById("selectedPropellerInfo");
+    if (!prop) {
+      info.textContent = "Uusi potkuri: täytä mitat alla.";
+      return;
+    }
 
     document.getElementById("diameter").value = prop.Diameter_in ?? "";
     document.getElementById("pitch").value = prop.Pitch_in ?? "";
     document.getElementById("blades").value = prop.Blades ?? "";
+    info.textContent = `${prop.PropellerBrand || ""} ${prop.PropellerModel || ""}${prop.Material ? " · " + prop.Material : ""}${prop.DataStatus === "UNVERIFIED" ? " · Tarkistamaton rekisteritieto" : ""}`.trim();
   });
 
   // Jos rekisteripotkurin mittoja muutetaan käsin, irrota sen ID.
@@ -604,7 +536,6 @@
     try {
       const result = await apiPost({ action: "listProps" });
       propellers = Array.isArray(result.propellers) ? result.propellers : [];
-      populatePropellerFilters();
       renderPropellerOptions();
     } catch (error) {
       showStatus("Potkurirekisteriä ei saatu ladattua: " + error.message, "error");
@@ -1047,4 +978,3 @@
 </html>
 		
 						
-											
