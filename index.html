@@ -9,26 +9,20 @@
   
 
 <style>
-/* Beta preview layout */
+/* Beta preview layout: independent vertical columns, no shared row heights */
 #testForm .responsive-test-layout {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  grid-template-areas:
-    "source conditions calculate"
-    "engine prop result"
-    ". weather save";
   gap: 1rem;
   align-items: start;
 }
+#testForm .test-column {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-width: 0;
+}
 #testForm .field-group { margin: 0; min-width: 0; }
-#testForm .field-group:nth-of-type(1) { grid-area: source; }
-#testForm .field-group:nth-of-type(2) { grid-area: engine; }
-#testForm .field-group:nth-of-type(3) { grid-area: prop; }
-#testForm .field-group:nth-of-type(4) { grid-area: conditions; }
-#testForm .weather-panel { grid-area: weather; min-width: 0; }
-#testForm .result-panel { grid-area: result; min-width: 0; }
-#testForm .calculate-panel { grid-area: calculate; }
-#testForm .save-action-panel { grid-area: save; }
 #testForm .action-panel {
   display: flex;
   align-items: center;
@@ -56,15 +50,6 @@
 @media (max-width: 760px) {
   #testForm .responsive-test-layout {
     grid-template-columns: minmax(0, 1fr);
-    grid-template-areas:
-      "source"
-      "engine"
-      "prop"
-      "conditions"
-      "weather"
-      "calculate"
-      "result"
-      "save";
   }
   #testForm .action-panel { justify-content: flex-start; }
   #testForm .compact-action { width: auto !important; }
@@ -94,6 +79,7 @@
   <h2>Testitiedot</h2>
   <form id="testForm">
     <div class="responsive-test-layout">
+      <div class="test-column test-column-left">
 <section class="field-group">
       <h3>Lähde ja tunnistetiedot</h3>
       <div class="field-list">
@@ -118,6 +104,7 @@
       </div>
     </section>
 
+
 <section class="field-group">
       <h3>Moottorin tiedot</h3>
       <div class="field-list">
@@ -128,6 +115,22 @@
       <div class="field-row"><label for="fuelType">Polttoaine</label><select id="fuelType"><option value="">Ei tiedossa / ei ilmoiteta</option><option value="glow">Hehkutulppapolttoaine</option><option value="gasoline">Bensiini</option><option value="diesel">Diesel</option><option value="other">Muu</option></select></div>
       </div>
     </section>
+
+
+      </div>
+      <div class="test-column test-column-middle">
+<section class="field-group">
+      <h3>Potkurin tiedot</h3>
+      <div class="field-list">
+<div class="field-row"><label for="diameter">Potkurin halkaisija (tuumaa)</label><input id="diameter" type="number" min="1" max="100" step="any" value="25" required></div>
+      <div class="field-row"><label for="pitch">Potkurin nousu (tuumaa) *</label><input id="pitch" type="number" min="0.1" max="100" step="any" value="8" required></div>
+      <div class="field-row"><label for="blades">Lapojen määrä</label><input id="blades" type="number" min="1" max="8" step="1" value="2" required></div>
+      <div class="field-row"><label for="rpm">Mitattu kierrosluku (r/min)</label><input id="rpm" type="number" min="1" max="100000" step="1" value="6000" required></div>
+      <div class="field-row"><label for="thrust">Työntövoima</label><input id="thrust" type="number" min="0" step="any" placeholder="Jätä tyhjäksi, jos ei mitattu"></div>
+      <div class="field-row"><label for="thrustUnit">Työntövoiman yksikkö</label><select id="thrustUnit"><option value="kgf">kgf (kilogrammavoima)</option><option value="N">N (newton)</option><option value="lbf">lbf (paunavoima)</option></select></div>
+      </div>
+    </section>
+
 
 <section class="field-group">
       <h3>Mittausolosuhteet ja lähde</h3>
@@ -142,17 +145,6 @@
       </div>
     </section>
     
-<section class="field-group">
-      <h3>Potkurin tiedot</h3>
-      <div class="field-list">
-<div class="field-row"><label for="diameter">Potkurin halkaisija (tuumaa)</label><input id="diameter" type="number" min="1" max="100" step="any" value="25" required></div>
-      <div class="field-row"><label for="pitch">Potkurin nousu (tuumaa) *</label><input id="pitch" type="number" min="0.1" max="100" step="any" value="8" required></div>
-      <div class="field-row"><label for="blades">Lapojen määrä</label><input id="blades" type="number" min="1" max="8" step="1" value="2" required></div>
-      <div class="field-row"><label for="rpm">Mitattu kierrosluku (r/min)</label><input id="rpm" type="number" min="1" max="100000" step="1" value="6000" required></div>
-      <div class="field-row"><label for="thrust">Työntövoima</label><input id="thrust" type="number" min="0" step="any" placeholder="Jätä tyhjäksi, jos ei mitattu"></div>
-      <div class="field-row"><label for="thrustUnit">Työntövoiman yksikkö</label><select id="thrustUnit"><option value="kgf">kgf (kilogrammavoima)</option><option value="N">N (newton)</option><option value="lbf">lbf (paunavoima)</option></select></div>
-      </div>
-    </section>
 
 <div class="weather-panel">
       <h3>Historiallisten sääolosuhteiden haku</h3>
@@ -167,15 +159,22 @@
 
     </div>
     
+
+      </div>
+      <div class="test-column test-column-right">
 <div class="action-panel calculate-panel"><button id="calculateButton" class="secondary-button compact-action" type="button">Laske</button></div>
+
 <section class="result-panel" aria-labelledby="resultHeading">
       <h3 id="resultHeading">Testin tulos</h3>
       <p class="result-intro">Simulointitulokset näkyvät tässä ennen tallennusta. Laskenta ei tallenna tietoja.</p>
       <div id="status" role="status" aria-live="polite"></div>
     </section>
     
+
 <div class="action-panel save-action-panel"><button id="saveButton" type="submit" class="compact-action" disabled>Tallenna testimittaus</button></div>
-</div>
+
+      </div>
+    </div>
   </form>
   </div>
 
@@ -1047,4 +1046,5 @@
 </body>
 </html>
 		
+						
 											
