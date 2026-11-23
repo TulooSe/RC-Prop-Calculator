@@ -12,12 +12,11 @@
 /* Beta preview layout */
 #testForm .responsive-test-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   grid-template-areas:
-    "source engine"
-    "conditions prop"
-    "weather result"
-    "calculate save";
+    "source engine prop"
+    "conditions weather result"
+    "calculate . save";
   gap: 1rem;
   align-items: start;
 }
