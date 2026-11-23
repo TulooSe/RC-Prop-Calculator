@@ -116,6 +116,9 @@
         <div class="field-row"><label for="diameter">Halkaisija (tuumaa)</label><input id="diameter" type="number" min="1" max="100" step="any" value="25" required></div>
         <div class="field-row"><label for="pitch">Nousu (tuumaa) *</label><input id="pitch" type="number" min="0.1" max="100" step="any" value="8" required></div>
         <div class="field-row"><label for="blades">Lapojen määrä</label><input id="blades" type="number" min="1" max="8" step="1" value="2" required></div>
+        <div class="field-row"><label for="rpm">Mitattu kierrosluku (r/min)</label><input id="rpm" type="number" min="1" max="100000" step="1" value="6000" required></div>
+        <div class="field-row"><label for="thrust">Mitattu työntövoima</label><input id="thrust" type="number" min="0" step="any" placeholder="Jätä tyhjäksi, jos ei mitattu"></div>
+        <div class="field-row"><label for="thrustUnit">Työntövoiman yksikkö</label><select id="thrustUnit"><option value="kgf">kgf (kilogrammavoima)</option><option value="N">N (newton)</option><option value="lbf">lbf (paunavoima)</option></select></div>
       </div>
     </section>
 
@@ -977,4 +980,4 @@
 </body>
 </html>
 		
-						
+										
