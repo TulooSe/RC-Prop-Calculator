@@ -10,6 +10,24 @@
 
 <style>
 /* Beta preview layout: independent vertical columns, no shared row heights */
+/* Yläpalkki: otsikko, käyttäjä ja uloskirjautuminen samassa laatikossa */
+.app-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 1rem;
+  padding: .65rem 1rem;
+  margin-bottom: .5rem;
+  border: 1px solid var(--border, #d7d7d7);
+  border-radius: .6rem;
+  background: var(--panel, #fff);
+}
+.app-header h1 { margin: 0; }
+#userBar[hidden] { display: none !important; }
+#userBar:not([hidden]) { display: contents; }
+#userInfo { grid-column: 2; justify-self: center; min-width: 0; }
+#logoutButton { grid-column: 3; justify-self: end; margin: 0; white-space: nowrap; }
+
 #testForm .responsive-test-layout {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -51,6 +69,10 @@
 }
 #testForm .result-panel { align-self: stretch; }
 @media (max-width: 760px) {
+  .app-header { grid-template-columns: minmax(0, 1fr) auto; row-gap: .45rem; }
+  .app-header h1 { grid-column: 1 / -1; }
+  #userInfo { grid-column: 1; justify-self: start; }
+  #logoutButton { grid-column: 2; }
   #testForm .responsive-test-layout {
     grid-template-columns: minmax(0, 1fr);
   }
@@ -62,7 +84,13 @@
 </head>
 <body>
 <main>
-  <h1>RC Prop Calculator</h1>
+  <div class="app-header">
+    <h1>RC Prop Calculator</h1>
+    <div id="userBar" class="user-bar" hidden>
+      <span id="userInfo"></span>
+      <button id="logoutButton" type="button" class="secondary-button">Kirjaudu ulos</button>
+    </div>
+  </div>
   <p class="intro">Polttomoottorikäyttöisten RC-lennokkien potkuritestien tallennus.</p>
   <section id="authPanel" class="auth-panel" aria-labelledby="authHeading">
     <h2 id="authHeading">Kirjaudu RC Prop Calculatoriin</h2>
@@ -70,10 +98,6 @@
     <div id="googleSignInButton"></div>
     <p id="authStatus" role="status" aria-live="polite">Kirjautuminen vaaditaan.</p>
   </section>
-  <div id="userBar" class="user-bar" hidden>
-    <span id="userInfo"></span>
-    <button id="logoutButton" type="button" class="secondary-button">Kirjaudu ulos</button>
-  </div>
   <nav class="tabs" hidden role="tablist" aria-label="Sovelluksen näkymät">
     <button type="button" class="tab-button active" id="currentTab" role="tab" aria-selected="true" aria-controls="currentTestPanel" data-target="currentTestPanel">Uusi testimittaus</button>
     <button type="button" class="tab-button" id="savedTab" role="tab" aria-selected="false" aria-controls="savedTestsSection" data-target="savedTestsSection">Tallennetut testimittaukset</button>
@@ -137,6 +161,9 @@
     </section>
     
 
+
+      </div>
+      <div class="test-column test-column-right">
 <div class="weather-panel">
       <h3>Historiallisten sääolosuhteiden haku</h3>
       <p class="table-note weather-intro" title="Hae päivämäärän ja paikan perusteella mallinnetut tuntisäätiedot. Voit antaa muistamasi lämpötilan löytääksesi sitä lähinnä olevat tunnit. Historiallisessa sääarkistossa on viivettä, joten aivan uusimmat päivät eivät välttämättä ole saatavilla.">Vie osoitin tämän ohjetekstin päälle saadaksesi lisätietoja.</p>
@@ -149,10 +176,7 @@
       <p id="weatherStatus" class="table-note" role="status" aria-live="polite"></p>
 
     </div>
-    
 
-      </div>
-      <div class="test-column test-column-right">
 <div class="action-panel calculate-panel"><button id="calculateButton" class="secondary-button compact-action" type="button">Laske</button></div>
 
 <section class="result-panel" aria-labelledby="resultHeading">
@@ -980,4 +1004,4 @@
 </body>
 </html>
 		
-										
+															
