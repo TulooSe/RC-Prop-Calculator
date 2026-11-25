@@ -111,7 +111,7 @@
       <h3>Lähde ja tunnistetiedot</h3>
       <div class="field-list">
         <div class="field-row"><label for="alias">Nimimerkki</label><input id="alias" value="TestUser" maxlength="60"></div>
-        <div class="field-row"><label for="source">Tietolähde</label><select id="source"><option value="OwnTest">Oma mittaus</option><option value="YouTube">YouTube</option><option value="Website">Verkkosivu</option><option value="Publication">Julkaisu</option><option value="Other">Muu</option></select></div>
+        <div class="field-row"><label for="source">Tietolähde</label><select id="source"><option value="">Ladataan valintoja…</option></select></div>
       </div>
     </section>
 <section class="field-group">
@@ -123,8 +123,8 @@
         <div class="field-row"><label for="engineMake">Valmistaja</label><input id="engineMake" placeholder="Esim. Saito" maxlength="80" required></div>
         <div class="field-row"><label for="engineModel">Malli</label><input id="engineModel" placeholder="Esim. FG-61TS" maxlength="80" required></div>
         <div class="field-row"><label for="engineCc">Iskutilavuus (cm³)</label><input id="engineCc" type="number" min="0.1" max="1000" step="any" placeholder="Esim. 10.0"></div>
-        <div class="field-row"><label for="engineType">Moottorityyppi</label><select id="engineType"><option value="">Ei tiedossa / ei ilmoiteta</option><option value="2-stroke">2-tahti</option><option value="4-stroke">4-tahti</option><option value="rotary">Wankel / rotaatiomoottori</option><option value="other-ic">Muu polttomoottori</option></select></div>
-        <div class="field-row"><label for="fuelType">Polttoaine</label><select id="fuelType"><option value="">Ei tiedossa / ei ilmoiteta</option><option value="glow">Hehkutulppapolttoaine</option><option value="gasoline">Bensiini</option><option value="diesel">Diesel</option><option value="other">Muu</option></select></div>
+        <div class="field-row"><label for="engineType">Moottorityyppi</label><select id="engineType"><option value="">Ei tiedossa / ei ilmoiteta</option></select></div>
+        <div class="field-row"><label for="fuelType">Polttoaine</label><select id="fuelType"><option value="">Ei tiedossa / ei ilmoiteta</option></select></div>
       </div>
     </section>
 
@@ -142,7 +142,7 @@
         <div class="field-row"><label for="blades">Lapojen määrä</label><input id="blades" type="number" min="1" max="8" step="1" value="2" required></div>
         <div class="field-row"><label for="rpm">Mitattu kierrosluku (r/min)</label><input id="rpm" type="number" min="1" max="100000" step="1" value="6000" required></div>
         <div class="field-row"><label for="thrust">Mitattu työntövoima</label><input id="thrust" type="number" min="0" step="any" placeholder="Jätä tyhjäksi, jos ei mitattu"></div>
-        <div class="field-row"><label for="thrustUnit">Työntövoiman yksikkö</label><select id="thrustUnit"><option value="kgf">kgf (kilogrammavoima)</option><option value="N">N (newton)</option><option value="lbf">lbf (paunavoima)</option></select></div>
+        <div class="field-row"><label for="thrustUnit">Työntövoiman yksikkö</label><select id="thrustUnit"><option value="">Ladataan valintoja…</option></select></div>
       </div>
     </section>
 
@@ -198,7 +198,7 @@
     <p class="intro">Selaa aiemmin tallennettuja mittauksia. Lista on vain luku -tilassa.</p>
     <div class="filters">
       <div class="field"><label for="testSearch">Hae moottoria, potkuria tai testitunnusta</label><input id="testSearch" type="search" placeholder="Esim. Saito, 25 × 8 tai PT-..."></div>
-      <div class="field"><label for="statusFilter">Datan tila</label><select id="statusFilter"><option value="">Kaikki tilat</option><option value="UNREVIEWED">Tarkastamaton</option><option value="REVIEWED">Tarkistettu</option><option value="VERIFIED">Vahvistettu mittaustulos</option><option value="APPROVED">Hyväksytty</option><option value="REJECTED">Hylätty</option></select></div>
+      <div class="field"><label for="statusFilter">Datan tila</label><select id="statusFilter"><option value="">Kaikki tilat</option></select></div>
     </div>
     <button id="refreshTests" class="secondary-button" type="button">Päivitä testilista</button>
     <p id="testsStatus" class="table-note" role="status" aria-live="polite">Testejä ei ole vielä ladattu.</p>
@@ -256,6 +256,11 @@
         (currentUser.alias || currentUser.email) + " · " + currentUser.role;
       if (!appInitialized) {
         appInitialized = true;
+        try {
+          await loadAppConfig();
+        } catch (configError) {
+          showStatus("CONFIG-asetuksia ei saatu ladattua. Valintalistat eivät ole käytettävissä: " + configError.message, "error");
+        }
         loadEngines();
         loadPropellers();
         loadTests();
@@ -315,6 +320,7 @@
   };
   let engines = [];
   let savedTests = [];
+  let appConfig = { groups: {} };
 
   const today = new Date();
   document.getElementById("date").value = [today.getFullYear(), String(today.getMonth()+1).padStart(2,"0"), String(today.getDate()).padStart(2,"0")].join("-");
@@ -347,12 +353,61 @@
     return result;
   }
 
+  // ENGINES-rekisterin täsmällinen sarakenimi on EngineType.
+  function getEngineType(engine) {
+    return engine ? (engine.EngineType || "") : "";
+  }
+
+  function configOptions(group) {
+    return Array.isArray(appConfig.groups[group]) ? appConfig.groups[group] : [];
+  }
+
+  function configLabel(group, key) {
+    return appConfig.labels && appConfig.labels[group] && appConfig.labels[group][key]
+      ? appConfig.labels[group][key] : key;
+  }
+
+  function populateConfigSelect(select, group, emptyLabel) {
+    const previous = select.value;
+    select.replaceChildren();
+    if (emptyLabel !== null) select.add(new Option(emptyLabel, ""));
+    configOptions(group).forEach(option => select.add(new Option(option.label, option.key)));
+    if (previous && !Array.from(select.options).some(option => option.value === previous)) {
+      select.add(new Option(configLabel(group, previous) + " (ei enää aktiivinen)", previous));
+    }
+    select.value = previous;
+  }
+
+  async function loadAppConfig() {
+    const result = await apiPost({ action: "getAppConfig" });
+    appConfig = result.config || { groups: {} };
+    appConfig.groups = appConfig.groups || {};
+    appConfig.labels = appConfig.labels || {};
+    populateConfigSelect(document.getElementById("source"), "SourceType", "Valitse tietolähde");
+    if (!document.getElementById("source").value && document.getElementById("source").options.length > 1) {
+      document.getElementById("source").selectedIndex = 1;
+    }
+    populateConfigSelect(engineFields.EngineType, "EngineType", "Ei tiedossa / ei ilmoiteta");
+    populateConfigSelect(engineFields.FuelType, "FuelType", "Ei tiedossa / ei ilmoiteta");
+    populateConfigSelect(document.getElementById("thrustUnit"), "ThrustUnit", null);
+    populateConfigSelect(statusFilter, "DataStatus", "Kaikki tilat");
+    if (!document.getElementById("thrustUnit").value && document.getElementById("thrustUnit").options.length) {
+      document.getElementById("thrustUnit").selectedIndex = 0;
+    }
+  }
+
   function setEngineFields(engine, isExisting) {
     engineFields.EngineMake.value = engine ? engine.EngineMake || "" : "";
     engineFields.EngineModel.value = engine ? engine.EngineModel || "" : "";
     engineFields.EngineDisplacement_cc.value = engine && engine.EngineDisplacement_cc != null ? engine.EngineDisplacement_cc : "";
-    engineFields.EngineType.value = engine ? engine.EngineType || "" : "";
-    engineFields.FuelType.value = engine ? engine.FuelType || "" : "";
+    const engineType = getEngineType(engine);
+    const fuelType = engine ? engine.FuelType || "" : "";
+    [ [engineFields.EngineType, engineType], [engineFields.FuelType, fuelType] ].forEach(([select, value]) => {
+      if (value && !Array.from(select.options).some(option => option.value === value)) {
+        select.add(new Option(configLabel(select === engineFields.EngineType ? "EngineType" : "FuelType", value) + " (ei enää aktiivinen)", value));
+      }
+      select.value = value;
+    });
     Object.values(engineFields).forEach(field => field.disabled = !!isExisting);
     engineFields.EngineMake.required = !isExisting;
     engineFields.EngineModel.required = !isExisting;
@@ -369,7 +424,7 @@
     const selectedId = engineSelect.value;
     const query = normalizedSearch(engineSearch.value);
     const filtered = engines.filter(engine => {
-      const haystack = [engine.EngineMake, engine.EngineModel, engine.EngineDisplacement_cc, engine.EngineType, engine.FuelType]
+      const haystack = [engine.EngineMake, engine.EngineModel, engine.EngineDisplacement_cc, getEngineType(engine), engine.FuelType]
         .map(normalizedSearch).join(" ");
       return !query || haystack.includes(query);
     }).sort((a,b) => {
@@ -490,8 +545,8 @@
   let propellers = [];
 
   function propellerLabel(prop) {
-    return `${prop.PropellerBrand || ""} ${prop.PropellerModel || ""} · ${prop.Diameter_in} × ${prop.Pitch_in} · ${prop.Blades} lapaa` +
-      (prop.DataStatus === "UNVERIFIED" ? " · tarkistamaton" : "");
+    const registryStatus = prop.DataStatus === "UNVERIFIED" ? " · " + configLabel("PropellerDataStatus", prop.DataStatus).toLocaleLowerCase("fi") : "";
+    return `${prop.PropellerBrand || ""} ${prop.PropellerModel || ""} · ${prop.Diameter_in} × ${prop.Pitch_in} · ${prop.Blades} lapaa` + registryStatus;
   }
 
   function renderPropellerOptions() {
@@ -544,7 +599,8 @@
     document.getElementById("diameter").value = prop.Diameter_in ?? "";
     document.getElementById("pitch").value = prop.Pitch_in ?? "";
     document.getElementById("blades").value = prop.Blades ?? "";
-    info.textContent = `${prop.PropellerBrand || ""} ${prop.PropellerModel || ""}${prop.Material ? " · " + prop.Material : ""}${prop.DataStatus === "UNVERIFIED" ? " · Tarkistamaton rekisteritieto" : ""}`.trim();
+    const registryStatus = prop.DataStatus === "UNVERIFIED" ? " · " + configLabel("PropellerDataStatus", prop.DataStatus) : "";
+    info.textContent = `${prop.PropellerBrand || ""} ${prop.PropellerModel || ""}${prop.Material ? " · " + prop.Material : ""}${registryStatus}`.trim();
   });
 
   // Jos rekisteripotkurin mittoja muutetaan käsin, irrota sen ID.
@@ -588,14 +644,8 @@
   }
 
   function dataStatusLabel(status) {
-    const labels = {
-      UNREVIEWED: "Tarkastamaton",
-      REVIEWED: "Tarkistettu",
-      VERIFIED: "Vahvistettu mittaustulos",
-      APPROVED: "Hyväksytty",
-      REJECTED: "Hylätty"
-    };
-    return labels[String(status || "").toUpperCase()] || status;
+    const key = String(status || "");
+    return key ? configLabel("DataStatus", key) : "—";
   }
 
   function renderTests() {
@@ -1003,5 +1053,7 @@
 </script>
 </body>
 </html>
+		
+						
 		
 															
