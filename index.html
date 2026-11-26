@@ -51,6 +51,23 @@
 }
 .app-header #logoutButton { margin: 0 !important; white-space: nowrap; }
 
+/* Toimintopainikkeet samaan kokoon ja typografiaan kuin syöttökentät. */
+#testForm #fetchWeather,
+#testForm #calculateButton,
+#testForm #saveButton,
+#testForm #printButton {
+  box-sizing: border-box;
+  width: auto !important;
+  min-height: 2rem !important;
+  height: 2rem !important;
+  padding: .2rem .55rem !important;
+  margin: 0 !important;
+  font-size: .9rem !important;
+  line-height: 1.2 !important;
+  font-weight: 400;
+  white-space: nowrap;
+}
+
 #testForm .responsive-test-layout {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -75,16 +92,6 @@
   min-width: 0;
   flex-wrap: wrap;
 }
-#testForm .compact-action {
-  width: auto !important;
-  min-height: 2.35rem !important;
-  height: 2.35rem !important;
-  padding: .35rem .8rem !important;
-  margin: 0 !important;
-  font-size: .95rem;
-  line-height: 1.2;
-  white-space: nowrap;
-}
 #printReport { display: none; }
 @media print {
   @page { margin: 15mm; }
@@ -98,12 +105,6 @@
   #printReport .print-meta p { margin: 0; }
 }
 .table-note { margin: 0; }
-#testForm .weather-action button {
-  width: auto !important;
-  min-height: 2.35rem;
-  height: 2.35rem;
-  padding: .35rem .8rem;
-}
 #testForm .result-panel { align-self: stretch; }
 #testForm .weather-panel h3 { margin-bottom: .55rem; }
 #testForm .calculate-panel { margin-top: -.25rem; }
@@ -1186,4 +1187,4 @@
 </body>
 </html>
 		
-																																						
+																																											
