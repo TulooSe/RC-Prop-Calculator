@@ -15,19 +15,41 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  gap: 1rem;
-  padding: .65rem 1rem;
-  margin-bottom: .5rem;
+  gap: .75rem;
+  padding: .35rem .8rem;
+  margin-bottom: .35rem;
   border: 1px solid var(--border, #d7d7d7);
   border-radius: .6rem;
   background: var(--panel, #fff);
 }
-.app-header h1 { margin: 0; display: flex; align-items: baseline; flex-wrap: wrap; column-gap: .65rem; row-gap: .1rem; min-width: 0; }
-.app-header .header-tagline { font-size: .72rem; font-weight: 400; line-height: 1.15; color: var(--muted, #666); }
+.app-header h1 { margin: 0; display: flex; align-items: baseline; flex-wrap: wrap; column-gap: .65rem; row-gap: .05rem; min-width: 0; line-height: 1.15; }
+.app-header .header-tagline { font-size: .72rem; font-weight: 400; line-height: 1.1; color: var(--muted, #666); }
 #userBar[hidden] { display: none !important; }
-#userBar:not([hidden]) { display: flex; align-items: center; justify-content: flex-end; gap: .65rem; min-width: 0; }
-#userInfo { min-width: 0; }
-#logoutButton { margin: 0; white-space: nowrap; }
+/* Käyttäjätiedot ja uloskirjautuminen kuuluvat samaan yläpalkkilaatikkoon. */
+.app-header #userBar,
+.app-header .user-bar,
+.app-header #userInfo {
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  border-radius: 0 !important;
+}
+.app-header #userBar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: .55rem;
+  min-width: 0;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+.app-header #userInfo {
+  min-width: 0;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+.app-header #logoutButton { margin: 0 !important; white-space: nowrap; }
 
 #testForm .responsive-test-layout {
   display: grid;
@@ -1164,4 +1186,4 @@
 </body>
 </html>
 		
-																																	
+																																						
