@@ -22,7 +22,8 @@
   border-radius: .6rem;
   background: var(--panel, #fff);
 }
-.app-header h1 { margin: 0; }
+.app-header h1 { margin: 0; display: flex; align-items: baseline; flex-wrap: wrap; column-gap: .85rem; row-gap: .15rem; }
+.app-header .header-tagline { font-size: .88rem; font-weight: 400; line-height: 1.25; color: var(--muted, #666); }
 #userBar[hidden] { display: none !important; }
 #userBar:not([hidden]) { display: contents; }
 #userInfo { grid-column: 2; justify-self: center; min-width: 0; }
@@ -100,13 +101,12 @@
 <body>
 <main>
   <div class="app-header">
-    <h1>RC Prop Calculator</h1>
+    <h1>RC Prop Calculator <span class="header-tagline">Polttomoottorikäyttöisten RC-lennokkien potkuritestien simulointi ja tallennus.</span></h1>
     <div id="userBar" class="user-bar" hidden>
       <span id="userInfo"></span>
       <button id="logoutButton" type="button" class="secondary-button">Kirjaudu ulos</button>
     </div>
   </div>
-  <p class="intro">Polttomoottorikäyttöisten RC-lennokkien potkuritestien tallennus.</p>
   <section id="authPanel" class="auth-panel" aria-labelledby="authHeading">
     <h2 id="authHeading">Kirjaudu RC Prop Calculatoriin</h2>
     <p>Kirjaudu Google-tilillä. Sovellukseen pääsevät vain ylläpitäjän hyväksymät käyttäjät.</p>
@@ -1163,4 +1163,4 @@
 </body>
 </html>
 		
-																								
+																												
