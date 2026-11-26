@@ -212,7 +212,7 @@
   </section>
 </main>
 <script>
-  const API_URL = "https://script.google.com/macros/s/AKfycbykLjeFsWcz5neJ-hqL9Mui5HSLUyuCmI6HVhhiQ25TaC9xkMeUX-TYLs1lOSlKTS8/exec";
+  const API_URL = "https://script.google.com/macros/s/AKfycbxQx7WE73sQJVkkwpJOCHZoUPDGBwwRo9Jmb3FcRAe2Bp93VYAlfM6SbxvgfNdD0eg/exec";
   // Korvaa tämä Google Cloud Consolessa luodulla OAuth 2.0 Web Client ID:llä.
   const GOOGLE_CLIENT_ID = "355241847834-ugpnpsput0l991aahpdrvgf4vtfl6dl1.apps.googleusercontent.com";
   let googleIdToken = "";
@@ -936,14 +936,19 @@
     return { test, selectedEngineId, selectedProp: selectedPropMatches ? selectedProp : null, errors };
   }
 
-  function calculatePreview(test, selectedProp) {
+  function calculatePreview(test, selectedProp, cp0ModelResult, cp0ModelError) {
     const density = Number(test.AirDensity_kg_m3);
     const rpm = Number(test.RPM_measured);
     const diameterM = Number(test.PropDiameter_in) * 0.0254;
     const revPerSecond = rpm / 60;
     const ct0 = Number(test.CT0_estimated);
     const thrustCalculatedN = ct0 * density * Math.pow(revPerSecond, 2) * Math.pow(diameterM, 4);
-    const cp0 = selectedProp ? toNumber(selectedProp.CP0_estimated) : NaN;
+    const registeredCp0 = selectedProp ? toNumber(selectedProp.CP0_estimated) : NaN;
+    const hasRegisteredCp0 = Number.isFinite(registeredCp0) && registeredCp0 > 0;
+    const cp0 = hasRegisteredCp0
+      ? registeredCp0
+      : (cp0ModelResult && Number(cp0ModelResult.CP0_estimated) > 0
+          ? Number(cp0ModelResult.CP0_estimated) : NaN);
     const propPowerW = Number.isFinite(cp0) && cp0 > 0
       ? cp0 * density * Math.pow(revPerSecond, 3) * Math.pow(diameterM, 5)
       : null;
@@ -955,15 +960,28 @@
     const thrustPerCc = Number.isFinite(displacement) && displacement > 0
       ? thrustCalculatedN / displacement
       : derived.thrustPerCc;
-    return { thrustCalculatedN, measuredThrustN, propPowerW, cp0, derived: { ...derived, thrustPerCc } };
+    return {
+      thrustCalculatedN, measuredThrustN, propPowerW, cp0,
+      cp0Source: hasRegisteredCp0 ? (selectedProp.CP0_method || "REKISTERI") : (cp0ModelResult ? cp0ModelResult.Model : ""),
+      cp0ModelResult: hasRegisteredCp0 ? null : cp0ModelResult,
+      cp0ModelError: hasRegisteredCp0 ? "" : (cp0ModelError || ""),
+      derived: { ...derived, thrustPerCc }
+    };
   }
 
   function showPreview(test, selectedProp, result) {
     const d = result.derived;
     const tempNote = d.assumedTemp ? " (20 °C oletus)" : ` (${d.tempC.toFixed(1)} °C)`;
     const powerText = result.propPowerW == null
-      ? "Ei laskettu – potkurille ei ole rekisterissä CP₀-arvoa."
+      ? "Ei laskettu – CP₀-arvoa ei ole eikä ennustemalli sovellu tähän syötteeseen."
       : `${Math.round(result.propPowerW)} W (${(result.propPowerW / 1000).toFixed(2)} kW, ${(result.propPowerW / 745.699872).toFixed(2)} hp)`;
+    const cp0Band = result.cp0ModelResult && result.cp0ModelResult.CP0_uncertainty_95;
+    const powerBand = cp0Band
+      ? `95 %: ${Math.round(cp0Band.Power_min_W)}–${Math.round(cp0Band.Power_max_W)} W (empiirinen LOPO-virheraja ±${cp0Band.error_pct.toFixed(2)} %)`
+      : "";
+    const cp0Text = result.cp0 == null || !Number.isFinite(result.cp0)
+      ? "Ei käytettävissä"
+      : result.cp0.toFixed(4) + (result.cp0Source ? " · " + result.cp0Source : "");
     const pitchSpeedText = d.pitchSpeed == null ? "—" : `${metricText(d.pitchSpeed)} m/s (${metricText(d.pitchSpeed * 3.6)} km/h)`;
     showStatus(
       "SIMULOINTI – ei tallennettu\n\n" +
@@ -977,25 +995,59 @@
       `Mitattu työntövoima: ${result.measuredThrustN == null ? "Ei annettu" : metricText(result.measuredThrustN, 2) + " N"}\n` +
       `Arvioitu työntövoima / iskutilavuus: ${metricText(d.thrustPerCc, 3)} N/cm³\n` +
       `Potkurin arvioitu ottama teho: ${powerText}\n` +
+      (powerBand ? `Tehoennusteen vaihteluväli: ${powerBand}\n` : "") +
+      (result.cp0ModelResult ? `CP₀-mallin MachTip: ${result.cp0ModelResult.MachTip.toFixed(4)} (äänennopeus 340.94 m/s)\n` : "") +
       `Käytetty CT₀: ${Number(test.CT0_estimated).toFixed(3)} (yleisoletus)\n` +
-      `Käytetty CP₀: ${result.propPowerW == null ? "Ei käytettävissä" : result.cp0.toFixed(4) + (selectedProp.CP0_method ? " · " + selectedProp.CP0_method : "")}\n\n` +
-      "Arviot ovat laskennallisia, eivät mittaustuloksia. Potkurin tehontarve näkyy vain, jos valitulle rekisteripotkurille on määritetty CP₀.",
+      `Käytetty CP₀: ${cp0Text}\n` +
+      (result.cp0ModelResult ? `CP₀-ennusteen 95 % vaihteluväli: ${result.cp0ModelResult.CP0_uncertainty_95.CP0_min.toFixed(4)}–${result.cp0ModelResult.CP0_uncertainty_95.CP0_max.toFixed(4)}\n` : "") +
+      (result.cp0ModelResult ? `Validointi: ${result.cp0ModelResult.Validation.propellerCount} potkuria, ${result.cp0ModelResult.Validation.pointCount} pistettä, LOPO MAPE ${result.cp0ModelResult.Validation.cp0Mape_pct.toFixed(2)} %.\n` : "") +
+      (result.cp0ModelError ? `CP₀-ennustetta ei voitu tehdä: ${result.cp0ModelError}\n` : "") +
+      "\nArviot ovat laskennallisia, eivät mittaustuloksia. CP₀-malli on validoitu vain Mejzlikin 2-lapaisella aineistolla. Ennusteen virheraja on aineistosta laskettu empiirinen vaihteluväli, ei takuu eikä muodollinen luottamusväli.",
       "success"
     );
   }
 
-  calculateButton.addEventListener("click", () => {
+  calculateButton.addEventListener("click", async () => {
     const collected = collectTestData();
     if (collected.errors.length) {
       invalidatePreview();
       showStatus(collected.errors.join("\n"), "error");
       return;
     }
-    const preview = calculatePreview(collected.test, collected.selectedProp);
-    showPreview(collected.test, collected.selectedProp, preview);
-    previewReady = true;
-    previewSnapshot = JSON.stringify(collected.test);
-    button.disabled = false;
+
+    calculateButton.disabled = true;
+    calculateButton.textContent = "Lasketaan…";
+    try {
+      let cp0ModelResult = null;
+      let cp0ModelError = "";
+      const registeredCp0 = collected.selectedProp ? toNumber(collected.selectedProp.CP0_estimated) : NaN;
+      if (!(Number.isFinite(registeredCp0) && registeredCp0 > 0)) {
+        try {
+          const estimate = await apiPost({
+            action: "estimateCP0",
+            Diameter_in: collected.test.PropDiameter_in,
+            Pitch_in: collected.test.PropPitch_in,
+            BladeCount: collected.test.BladeCount,
+            RPM: collected.test.RPM_measured,
+            AirDensity_kg_m3: collected.test.AirDensity_kg_m3
+          });
+          cp0ModelResult = estimate.result;
+        } catch (error) {
+          cp0ModelError = error.message;
+        }
+      }
+      const preview = calculatePreview(collected.test, collected.selectedProp, cp0ModelResult, cp0ModelError);
+      showPreview(collected.test, collected.selectedProp, preview);
+      previewReady = true;
+      previewSnapshot = JSON.stringify(collected.test);
+      button.disabled = false;
+    } catch (error) {
+      invalidatePreview();
+      showStatus("Laskenta epäonnistui: " + error.message, "error");
+    } finally {
+      calculateButton.disabled = false;
+      calculateButton.textContent = "Laske";
+    }
   });
 
   // Kaikki syötteiden muutokset vaativat uuden simuloinnin ennen tallennusta.
@@ -1053,7 +1105,5 @@
 </script>
 </body>
 </html>
-		
-						
 		
 															
