@@ -13,7 +13,7 @@
 /* Yläpalkki: otsikko, käyttäjä ja uloskirjautuminen samassa laatikossa */
 .app-header {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   gap: 1rem;
   padding: .65rem 1rem;
@@ -22,12 +22,12 @@
   border-radius: .6rem;
   background: var(--panel, #fff);
 }
-.app-header h1 { margin: 0; display: flex; align-items: baseline; flex-wrap: wrap; column-gap: .85rem; row-gap: .15rem; }
-.app-header .header-tagline { font-size: .88rem; font-weight: 400; line-height: 1.25; color: var(--muted, #666); }
+.app-header h1 { margin: 0; display: flex; align-items: baseline; flex-wrap: wrap; column-gap: .65rem; row-gap: .1rem; min-width: 0; }
+.app-header .header-tagline { font-size: .72rem; font-weight: 400; line-height: 1.15; color: var(--muted, #666); }
 #userBar[hidden] { display: none !important; }
-#userBar:not([hidden]) { display: contents; }
-#userInfo { grid-column: 2; justify-self: center; min-width: 0; }
-#logoutButton { grid-column: 3; justify-self: end; margin: 0; white-space: nowrap; }
+#userBar:not([hidden]) { display: flex; align-items: center; justify-content: flex-end; gap: .65rem; min-width: 0; }
+#userInfo { min-width: 0; }
+#logoutButton { margin: 0; white-space: nowrap; }
 
 #testForm .responsive-test-layout {
   display: grid;
@@ -42,7 +42,8 @@
   min-width: 0;
 }
 #testForm .field-group { margin: 0; min-width: 0; }
-#testForm .field-group .field-list { display: flex; flex-direction: column; gap: .65rem; }
+#testForm .field-group .field-list { display: flex; flex-direction: column; gap: .5rem; }
+#testForm .field-row label { font-size: .8rem; line-height: 1.15; }
 #testForm .filter-count { margin: 0; font-size: .82rem; color: var(--muted, #666); }
 #testForm .selected-component-info { margin: 0; font-size: .9rem; }
 #testForm .action-panel {
@@ -85,10 +86,10 @@
 #testForm .weather-panel h3 { margin-bottom: .55rem; }
 #testForm .calculate-panel { margin-top: -.25rem; }
 @media (max-width: 760px) {
-  .app-header { grid-template-columns: minmax(0, 1fr) auto; row-gap: .45rem; }
+  .app-header { grid-template-columns: minmax(0, 1fr); row-gap: .45rem; }
   .app-header h1 { grid-column: 1 / -1; }
-  #userInfo { grid-column: 1; justify-self: start; }
-  #logoutButton { grid-column: 2; }
+  #userBar:not([hidden]) { justify-content: flex-start; flex-wrap: wrap; }
+
   #testForm .responsive-test-layout {
     grid-template-columns: minmax(0, 1fr);
   }
@@ -1163,4 +1164,4 @@
 </body>
 </html>
 		
-																												
+																																	
