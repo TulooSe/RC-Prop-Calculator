@@ -61,7 +61,19 @@
   line-height: 1.2;
   white-space: nowrap;
 }
-#testForm .action-panel .table-note { margin: 0; }
+#printReport { display: none; }
+@media print {
+  @page { margin: 15mm; }
+  body { background: #fff !important; color: #000 !important; }
+  body > main { display: none !important; }
+  #printReport { display: block !important; font: 10.5pt/1.45 Arial, sans-serif; color: #000; }
+  #printReport h1 { font-size: 19pt; margin: 0 0 4mm; }
+  #printReport h2 { font-size: 12pt; margin: 5mm 0 2mm; }
+  #printReport pre { white-space: pre-wrap; overflow-wrap: anywhere; font: 9.5pt/1.4 Arial, sans-serif; border: 1px solid #bbb; padding: 4mm; }
+  #printReport .print-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 2mm 8mm; }
+  #printReport .print-meta p { margin: 0; }
+}
+.table-note { margin: 0; }
 #testForm .weather-action button {
   width: auto !important;
   min-height: 2.35rem;
@@ -120,7 +132,7 @@
 <section class="field-group">
       <h3>Moottori</h3>
       <div class="field-list">
-        <div class="field-row"><label for="engineSearch">Hae moottoria rekisteristä</label><input id="engineSearch" type="search" placeholder="Valmistaja, malli tai iskutilavuus"></div>
+        <div class="field-row"><label for="engineSearch">Suodata moottoreita rekisteristä</label><input id="engineSearch" type="search" placeholder="Valmistaja, malli tai iskutilavuus"></div>
         <p id="engineFilterCount" class="filter-count" aria-live="polite"></p>
         <div class="field-row"><label for="engineSelect">Valitse moottori</label><select id="engineSelect"><option value="">Uusi moottori – syötä tiedot alle</option></select><small>Valitse rekisteristä tai täytä tiedot alla uuden moottorin lisäämiseksi.</small></div>
         <div class="field-row"><label for="engineMake">Valmistaja</label><input id="engineMake" placeholder="Esim. Saito" maxlength="80" required></div>
@@ -137,7 +149,7 @@
 <section class="field-group">
       <h3>Potkuri</h3>
       <div class="field-list">
-        <div class="field-row"><label for="propSearch">Hae potkuria rekisteristä</label><input id="propSearch" type="search" placeholder="Valmistaja, malli tai esim. 20x6"></div>
+        <div class="field-row"><label for="propSearch">Suodata potkureita rekisteristä</label><input id="propSearch" type="search" placeholder="Valmistaja, malli tai esim. 20x6"></div>
         <p id="propFilterCount" class="filter-count" aria-live="polite"></p>
         <div class="field-row"><label for="propellerSelect">Valitse potkuri</label><select id="propellerSelect"><option value="">Uusi potkuri – syötä mitat käsin</option></select><small>Rekisterin tiedot ovat alustavia. Tarkista potkurin malli ja mitat alkuperäisestä lähteestä.</small></div><p id="selectedPropellerInfo" class="selected-component-info" aria-live="polite"></p>
         <div class="field-row"><label for="diameter">Halkaisija (tuumaa)</label><input id="diameter" type="number" min="1" max="100" step="any" value="25" required></div>
@@ -179,7 +191,7 @@
 
     </div>
 
-<div class="action-panel calculate-panel" aria-label="Laskenta ja tallennus"><button id="calculateButton" class="secondary-button compact-action" type="button">Laske</button><button id="saveButton" type="submit" class="compact-action" disabled>Tallenna testimittaus</button></div>
+<div class="action-panel calculate-panel" aria-label="Laskenta ja tallennus"><button id="calculateButton" class="secondary-button compact-action" type="button">Laske</button><button id="saveButton" type="submit" class="compact-action" disabled>Tallenna testimittaus</button><button id="printButton" class="secondary-button compact-action" type="button" disabled>Tulosta</button></div>
 
 <section class="result-panel" aria-labelledby="resultHeading">
       <h3 id="resultHeading">Testin tulos</h3>
@@ -209,6 +221,7 @@
     <p class="table-note">Työntövoima/iskutilavuus on laskennallinen arvio. Se perustuu CT₀-oletukseen ja ilman tiheyteen, ei mitattuun työntövoimaan. Arvioitu tehontarve tarkoittaa potkurin staattista absorboimaa tehoa, ei moottorin nimellistehoa eikä lennonaikaista tehontarvetta. CP₀-arvo näytetään vain, jos rekisteripotkurille on määritetty kerroin. Taulukkoa voi vierittää vaakasuunnassa, jos kaikki sarakkeet eivät mahdu näytölle.</p>
   </section>
 </main>
+<section id="printReport" aria-hidden="true"></section>
 <script>
   const API_URL = "https://script.google.com/macros/s/AKfycbwiMGQtS88qmcpOAwEcoxe90nskh9mPNGA8x8kwXzvhtNcD_VtQLBWP6zs_8dZO50E/exec";
   // Korvaa tämä Google Cloud Consolessa luodulla OAuth 2.0 Web Client ID:llä.
@@ -824,7 +837,7 @@
       const first = weatherHour.options[0];
       setDensityFromWeather(first.dataset.temp, first.dataset.pressure);
       weatherProvenance = `Historiallinen sääarvio: Open-Meteo ERA5; paikka ${location.name}${location.country ? ", " + location.country : ""}; koordinaatit ${location.latitude}, ${location.longitude}; valittu tunti ${first.dataset.time}; pintapaine ja lämpötila mallinnettuja arvoja.`;
-      weatherStatus.textContent = `Löytyi ${options.length} tuntiarvoa paikalle ${location.name}${location.country ? ", " + location.country : ""}. Valitse mittaushetkeä lähinnä oleva tunti. Kyse on uudelleenanalyysin arviosta, ei paikallisen sääaseman varmistetusta havainnosta.`;
+      weatherStatus.textContent = `Löytyi ${options.length} tuntiarvoa paikalle ${location.name}${location.country ? ", " + location.country : ""}. Valitse mittaushetken aika. Kyse on sään uudelleenanalyysin arviosta, ei varmennetusta havainnosta.`;
     } catch (error) {
       weatherStatus.textContent = "Säätietoja ei saatu haettua: " + error.message;
       weatherHour.disabled = true;
@@ -868,11 +881,16 @@
   const calculateButton = document.getElementById("calculateButton");
   let previewReady = false;
   let previewSnapshot = "";
+  const printButton = document.getElementById("printButton");
+  const printReport = document.getElementById("printReport");
+  let latestPrintResult = "";
 
   function invalidatePreview() {
     previewReady = false;
     previewSnapshot = "";
     button.disabled = true;
+    printButton.disabled = true;
+    latestPrintResult = "";
   }
 
   function collectTestData() {
@@ -1005,6 +1023,11 @@
     );
   }
 
+  printButton.addEventListener("click", () => {
+    if (!latestPrintResult || printButton.disabled) return;
+    window.print();
+  });
+
   calculateButton.addEventListener("click", async () => {
     const collected = collectTestData();
     if (collected.errors.length) {
@@ -1039,6 +1062,42 @@
       previewReady = true;
       previewSnapshot = JSON.stringify(collected.test);
       button.disabled = false;
+      latestPrintResult = statusBox.textContent;
+      const t = collected.test;
+      const meta = [
+        ["Mittauspäivä", t.TestDate || "—"],
+        ["Moottori", [t.EngineMake, t.EngineModel, t.EngineDisplacement_cc ? t.EngineDisplacement_cc + " cm³" : ""].filter(Boolean).join(" ") || "—"],
+        ["Potkuri", [t.PropMake || (collected.selectedProp && collected.selectedProp.PropellerBrand), t.PropModel || (collected.selectedProp && collected.selectedProp.PropellerModel), `${t.PropDiameter_in}×${t.PropPitch_in}`, `${t.BladeCount} lapaa`].filter(Boolean).join(" ")],
+        ["Kierrosluku", `${t.RPM_measured} r/min`],
+        ["Ilman tiheys", `${t.AirDensity_kg_m3} kg/m³`],
+        ["Lähde", t.SourceType || "—"],
+        ["Lähteen URL", t.SourceURL || "—"],
+        ["Lisätiedot", t.Notes || "—"]
+      ];
+      printReport.replaceChildren();
+      const heading = document.createElement("h1");
+      heading.textContent = "RC Prop Calculator – laskentaraportti";
+      printReport.appendChild(heading);
+      const metaHeading = document.createElement("h2");
+      metaHeading.textContent = "Lähtötiedot";
+      printReport.appendChild(metaHeading);
+      const metaBox = document.createElement("div");
+      metaBox.className = "print-meta";
+      meta.forEach(([label, value]) => {
+        const p = document.createElement("p");
+        const strong = document.createElement("strong");
+        strong.textContent = label + ": ";
+        p.append(strong, document.createTextNode(String(value)));
+        metaBox.appendChild(p);
+      });
+      printReport.appendChild(metaBox);
+      const resultHeading = document.createElement("h2");
+      resultHeading.textContent = "Laskentatulokset";
+      printReport.appendChild(resultHeading);
+      const pre = document.createElement("pre");
+      pre.textContent = latestPrintResult;
+      printReport.appendChild(pre);
+      printButton.disabled = false;
     } catch (error) {
       invalidatePreview();
       showStatus("Laskenta epäonnistui: " + error.message, "error");
@@ -1104,4 +1163,4 @@
 </body>
 </html>
 		
-																				
+																								
