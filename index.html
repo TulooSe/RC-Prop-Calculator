@@ -133,7 +133,7 @@
   </div>
   <section id="authPanel" class="auth-panel" aria-labelledby="authHeading">
     <h2 id="authHeading">Kirjaudu RC Prop Calculatoriin</h2>
-    <p>Kirjaudu Google-tilillä. Sovellukseen pääsevät vain ylläpitäjän hyväksymät käyttäjät.</p>
+    <p>Kirjaudu Google-tilillä. Uudet vahvistetut Google-tilit hyväksytään automaattisesti mittauskäyttäjiksi.</p>
     <div id="googleSignInButton"></div>
     <p id="authStatus" role="status" aria-live="polite">Kirjautuminen vaaditaan.</p>
   </section>
@@ -272,6 +272,17 @@
     if (message) authStatus.textContent = message;
   }
 
+  // Sisäiset roolitunnisteet säilyvät palvelimella englanninkielisinä.
+  // Käyttöliittymässä näytetään käyttäjälle selkeät suomenkieliset nimet.
+  function roleLabel(role) {
+    const labels = {
+      READER: "Katselija",
+      CONTRIBUTOR: "Mittauskäyttäjä",
+      ADMIN: "Ylläpitäjä"
+    };
+    return labels[String(role || "").toUpperCase()] || "Tuntematon rooli";
+  }
+
   async function handleGoogleCredential(response) {
     if (!response || !response.credential) {
       showAuthScreen("Google-kirjautuminen epäonnistui. Yritä uudelleen.");
@@ -288,7 +299,7 @@
       savedTestsSection.hidden = true;
       userBar.hidden = false;
       document.getElementById("userInfo").textContent =
-        (currentUser.alias || currentUser.email) + " · " + currentUser.role;
+        (currentUser.alias || currentUser.email) + " · " + roleLabel(currentUser.role);
       if (!appInitialized) {
         appInitialized = true;
         try {
@@ -1187,4 +1198,4 @@
 </body>
 </html>
 		
-																																											
+																																																
